@@ -73,8 +73,13 @@
 
     function createShortUrl() {
 
-      const url = document.getElementById("urlInput").value.trim();
+ const button = document.querySelector("button");
 
+  button.disabled = true;
+  button.textContent = "กำลังสร้าง...";
+
+  const url = document.getElementById("urlInput").value.trim();
+      
       if (!url) {
         alert("กรุณาใส่ URL ก่อนค่ะ");
         return;
