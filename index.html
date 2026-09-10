@@ -92,7 +92,8 @@
       // สร้างชื่อ callback แบบสุ่ม
       const callbackName =
         "shortUrlCallback_" + Date.now();
-
+const requestId = "REQ-" + Date.now();
+console.log("REQUEST ID:", requestId);
 
       // สร้าง function สำหรับรับข้อมูลกลับจาก Apps Script
       window[callbackName] = function(data) {
@@ -141,8 +142,10 @@ script.id = callbackName;
 script.src =
   API_URL +
   "?callback=" + encodeURIComponent(callbackName) +
-  "&longUrl=" + encodeURIComponent(url);
+  "&longUrl=" + encodeURIComponent(url) +
+  "&requestId=" + encodeURIComponent(requestId);
 
+      
 script.onload = function() {
   console.log("JSONP script โหลดสำเร็จ");
 };
