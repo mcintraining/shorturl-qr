@@ -3,12 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>ShortURL + QR</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 60px auto;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #666;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      margin-top: 20px;
+      font-size: 16px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 12px 25px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
 
   <h1>ShortURL + QR</h1>
-  <p>เว็บทดลองสร้าง Short URL และ QR Code</p>
+
+  <p>สร้าง Short URL และ QR Code จากลิงก์ของคุณ</p>
+
+  <input
+    type="url"
+    id="longUrl"
+    placeholder="วาง URL ที่ต้องการย่อที่นี่"
+  >
+
+  <br>
+
+  <button onclick="createLink()">
+    สร้าง Short URL + QR
+  </button>
+
+  <script>
+    function createLink() {
+      const url = document.getElementById("longUrl").value.trim();
+
+      if (!url) {
+        alert("กรุณาใส่ URL ก่อนค่ะ");
+        return;
+      }
+
+      alert("รับ URL แล้วค่ะ\n\n" + url);
+    }
+  </script>
 
 </body>
 </html>
