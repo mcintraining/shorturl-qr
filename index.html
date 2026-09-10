@@ -4,177 +4,143 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>ShortURL + QR</title>
+  <title>Short URL + QR</title>
 
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 700px;
+      max-width: 600px;
       margin: 60px auto;
       padding: 20px;
-      text-align: center;
     }
 
     h1 {
-      margin-bottom: 10px;
-    }
-
-    p {
-      color: #666;
+      text-align: center;
     }
 
     input {
       width: 100%;
       box-sizing: border-box;
-      padding: 14px;
-      margin-top: 20px;
+      padding: 12px;
+      margin: 8px 0;
       font-size: 16px;
     }
 
     button {
-      margin-top: 15px;
-      padding: 12px 25px;
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
       font-size: 16px;
       cursor: pointer;
     }
 
     #result {
       margin-top: 30px;
+      text-align: center;
     }
 
-    #qrResult img {
-      width: 250px;
-      height: 250px;
+    #qr {
+      margin-top: 20px;
     }
 
-    .short-url {
-      font-size: 20px;
-      font-weight: bold;
-      margin: 15px 0;
-      word-break: break-all;
+    .error {
+      color: red;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>ShortURL + QR</h1>
-
-  <p>สร้าง Short URL และ QR Code จากลิงก์ของคุณ</p>
+  <h1>Short URL + QR</h1>
 
   <input
     type="url"
-    id="longUrl"
-    placeholder="วาง URL ที่ต้องการย่อที่นี่"
+    id="urlInput"
+    placeholder="วาง URL ที่ต้องการย่อ"
   >
 
-  <br>
-
   <button onclick="createShortUrl()">
-    สร้าง Short URL + QR
+    สร้าง Short URL
   </button>
 
   <div id="result"></div>
 
-
   <script>
 
-    // URL ของ Google Apps Script Web App
     const API_URL =
       "https://script.google.com/macros/s/AKfycbyX4QKp8avHVhcmALKy6VrTcopjpLX4c8PbXqX0pNis6RMDLy7eSmNka6NdEiylzopWfw/exec";
 
 
-    async function createShortUrl() {
+    function createShortUrl() {
 
-      const url =
-        document.getElementById("longUrl").value.trim();
+      const url = document.getElementById("urlInput").value.trim();
 
       if (!url) {
         alert("กรุณาใส่ URL ก่อนค่ะ");
         return;
       }
 
-
       document.getElementById("result").innerHTML =
-        "<p>กำลังสร้าง Short URL...</p>";
+        "กำลังสร้าง Short URL...";
 
 
-      try {
-
-        const response = await fetch(API_URL, {
-
-          method: "POST",
-
-          body: JSON.stringify({
-            longUrl: url,
-            title: ""
-          })
-
-        });
+      // สร้างชื่อ callback แบบสุ่ม
+      const callbackName =
+        "shortUrlCallback_" + Date.now();
 
 
-        const data = await response.json();
+      // สร้าง function สำหรับรับข้อมูลกลับจาก Apps Script
+      window[callbackName] = function(data) {
+
+        // ลบ callback หลังใช้งาน
+        delete window[callbackName];
 
 
-        if (!data.success) {
+        // ลบ script ที่สร้างขึ้น
+        const script = document.getElementById(callbackName);
 
-          throw new Error(
-            data.error || "เกิดข้อผิดพลาด"
-          );
-
+        if (script) {
+          script.remove();
         }
 
 
-        // ตอนนี้เรายังใช้ URL แบบชั่วคราว
-        // เพื่อทดสอบว่า Code ที่ได้กลับมาทำงานจริง
+        // ถ้าเกิด error
+        if (!data.success) {
+
+          document.getElementById("result").innerHTML =
+            '<div class="error">เกิดข้อผิดพลาด: ' +
+            data.error +
+            '</div>';
+
+          return;
+        }
+
+
+        // ได้ Code แล้ว
         const shortCode = data.code;
 
 
-        // QR ตอนนี้ยัง encode Code อย่างเดียว
-        // เดี๋ยว Step ถัดไปเราจะเปลี่ยนเป็น Short URL จริง
-        const qrUrl =
-          "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data="
-          + encodeURIComponent(shortCode);
+        // ตอนนี้ยังใช้แค่ Code เพื่อทดสอบ
+        document.getElementById("result").innerHTML =
+          "<p><strong>สร้างสำเร็จค่ะ 🎉</strong></p>" +
+          "<p>Short Code:</p>" +
+          "<h2>" + shortCode + "</h2>";
+      };
 
 
-        document.getElementById("result").innerHTML = `
+      // สร้าง URL สำหรับ JSONP
+      const script = document.createElement("script");
 
-          <h3>สร้างสำเร็จ 🎉</h3>
+      script.id = callbackName;
 
-          <p>Short Code</p>
-
-          <div class="short-url">
-            ${shortCode}
-          </div>
-
-          <div id="qrResult">
-            <img
-              src="${qrUrl}"
-              alt="QR Code"
-            >
-          </div>
-
-          <p>
-            URL ต้นฉบับ:<br>
-            ${url}
-          </p>
-
-        `;
+      script.src =
+        API_URL +
+        "?callback=" + encodeURIComponent(callbackName) +
+        "&longUrl=" + encodeURIComponent(url);
 
 
-      } catch (error) {
-
-        console.error(error);
-
-        document.getElementById("result").innerHTML = `
-
-          <p style="color:red;">
-            เกิดข้อผิดพลาด: ${error.message}
-          </p>
-
-        `;
-
-      }
+      // เพิ่ม script เข้า page
+      document.body.appendChild(script);
 
     }
 
