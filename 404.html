@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>กำลังเปิดลิงก์...</title>
+</head>
+
+<body>
+
+  <p style="text-align:center; margin-top:60px;">
+    กำลังเปิดลิงก์...
+  </p>
+
+  <script>
+
+    // ดึง Code จาก URL
+    // เช่น /shorturl-qr/EWRuot
+    // จะได้ EWRuot
+
+    const path = window.location.pathname;
+
+    const code =
+      path.split("/").filter(Boolean).pop();
+
+    console.log("Short code:", code);
+
+  </script>
+
+</body>
+</html>
