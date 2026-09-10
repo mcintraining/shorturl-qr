@@ -37,6 +37,15 @@
       font-size: 16px;
       cursor: pointer;
     }
+
+    #qrResult {
+      margin-top: 30px;
+    }
+
+    #qrResult img {
+      width: 250px;
+      height: 250px;
+    }
   </style>
 </head>
 
@@ -54,12 +63,17 @@
 
   <br>
 
-  <button onclick="createLink()">
-    สร้าง Short URL + QR
+  <button onclick="createQR()">
+    สร้าง QR Code
   </button>
 
+  <div id="qrResult"></div>
+
+
   <script>
-    function createLink() {
+
+    function createQR() {
+
       const url = document.getElementById("longUrl").value.trim();
 
       if (!url) {
@@ -67,8 +81,17 @@
         return;
       }
 
-      alert("รับ URL แล้วค่ะ\n\n" + url);
+      const qrUrl =
+        "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data="
+        + encodeURIComponent(url);
+
+      document.getElementById("qrResult").innerHTML = `
+        <h3>QR Code</h3>
+        <img src="${qrUrl}" alt="QR Code">
+        <p>${url}</p>
+      `;
     }
+
   </script>
 
 </body>
