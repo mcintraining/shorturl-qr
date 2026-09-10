@@ -131,16 +131,22 @@
       // สร้าง URL สำหรับ JSONP
       const script = document.createElement("script");
 
-      script.id = callbackName;
+script.id = callbackName;
 
-      script.src =
-        API_URL +
-        "?callback=" + encodeURIComponent(callbackName) +
-        "&longUrl=" + encodeURIComponent(url);
+script.src =
+  API_URL +
+  "?callback=" + encodeURIComponent(callbackName) +
+  "&longUrl=" + encodeURIComponent(url);
 
+script.onload = function() {
+  console.log("JSONP script โหลดสำเร็จ");
+};
 
-      // เพิ่ม script เข้า page
-      document.body.appendChild(script);
+script.onerror = function() {
+  console.log("JSONP script โหลดไม่สำเร็จ");
+};
+
+document.body.appendChild(script);
 
     }
 
