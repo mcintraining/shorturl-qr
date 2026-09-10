@@ -38,13 +38,20 @@
       cursor: pointer;
     }
 
-    #qrResult {
+    #result {
       margin-top: 30px;
     }
 
     #qrResult img {
       width: 250px;
       height: 250px;
+    }
+
+    .short-url {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 15px 0;
+      word-break: break-all;
     }
   </style>
 </head>
@@ -63,33 +70,112 @@
 
   <br>
 
-  <button onclick="createQR()">
-    สร้าง QR Code
+  <button onclick="createShortUrl()">
+    สร้าง Short URL + QR
   </button>
 
-  <div id="qrResult"></div>
+  <div id="result"></div>
 
 
   <script>
 
-    function createQR() {
+    // URL ของ Google Apps Script Web App
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbyX4QKp8avHVhcmALKy6VrTcopjpLX4c8PbXqX0pNis6RMDLy7eSmNka6NdEiylzopWfw/exec";
 
-      const url = document.getElementById("longUrl").value.trim();
+
+    async function createShortUrl() {
+
+      const url =
+        document.getElementById("longUrl").value.trim();
 
       if (!url) {
         alert("กรุณาใส่ URL ก่อนค่ะ");
         return;
       }
 
-      const qrUrl =
-        "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data="
-        + encodeURIComponent(url);
 
-      document.getElementById("qrResult").innerHTML = `
-        <h3>QR Code</h3>
-        <img src="${qrUrl}" alt="QR Code">
-        <p>${url}</p>
-      `;
+      document.getElementById("result").innerHTML =
+        "<p>กำลังสร้าง Short URL...</p>";
+
+
+      try {
+
+        const response = await fetch(API_URL, {
+
+          method: "POST",
+
+          body: JSON.stringify({
+            longUrl: url,
+            title: ""
+          })
+
+        });
+
+
+        const data = await response.json();
+
+
+        if (!data.success) {
+
+          throw new Error(
+            data.error || "เกิดข้อผิดพลาด"
+          );
+
+        }
+
+
+        // ตอนนี้เรายังใช้ URL แบบชั่วคราว
+        // เพื่อทดสอบว่า Code ที่ได้กลับมาทำงานจริง
+        const shortCode = data.code;
+
+
+        // QR ตอนนี้ยัง encode Code อย่างเดียว
+        // เดี๋ยว Step ถัดไปเราจะเปลี่ยนเป็น Short URL จริง
+        const qrUrl =
+          "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data="
+          + encodeURIComponent(shortCode);
+
+
+        document.getElementById("result").innerHTML = `
+
+          <h3>สร้างสำเร็จ 🎉</h3>
+
+          <p>Short Code</p>
+
+          <div class="short-url">
+            ${shortCode}
+          </div>
+
+          <div id="qrResult">
+            <img
+              src="${qrUrl}"
+              alt="QR Code"
+            >
+          </div>
+
+          <p>
+            URL ต้นฉบับ:<br>
+            ${url}
+          </p>
+
+        `;
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        document.getElementById("result").innerHTML = `
+
+          <p style="color:red;">
+            เกิดข้อผิดพลาด: ${error.message}
+          </p>
+
+        `;
+
+      }
+
     }
 
   </script>
