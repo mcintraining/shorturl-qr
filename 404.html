@@ -1,31 +1,185 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>กำลังเปิดลิงก์...</title>
+
 </head>
+
 
 <body>
 
-  <p style="text-align:center; margin-top:60px;">
+  <p
+    style="
+      text-align:center;
+      margin-top:60px;
+      font-family:Arial,sans-serif;
+    "
+  >
     กำลังเปิดลิงก์...
   </p>
 
+
   <script>
 
-    // ดึง Code จาก URL
-    // เช่น /shorturl-qr/EWRuot
-    // จะได้ EWRuot
+    // =====================================
+    // Apps Script API
+    // =====================================
+
+    const API_URL =
+      "https://script.google.com/macros/s/AKfycbyX4QKp8avHVhcmALKy6VrTcopjpLX4c8PbXqX0pNis6RMDLy7eSmNka6NdEiylzopWfw/exec";
+
+
+    // =====================================
+    // ดึง Short Code จาก URL
+    // เช่น
+    // /shorturl-qr/EWRuot
+    //
+    // จะได้
+    // EWRuot
+    // =====================================
 
     const path = window.location.pathname;
 
     const code =
       path.split("/").filter(Boolean).pop();
 
+
     console.log("Short code:", code);
+
+
+    // =====================================
+    // สร้างชื่อ callback
+    // =====================================
+
+    const callbackName =
+      "lookupCallback_" + Date.now();
+
+
+    // =====================================
+    // รับผลจาก Apps Script
+    // =====================================
+
+    window[callbackName] = function(data) {
+
+      console.log("Lookup result:", data);
+
+
+      // ลบ callback
+      delete window[callbackName];
+
+
+      // ลบ script ที่สร้างขึ้น
+      const script =
+        document.getElementById(callbackName);
+
+      if (script) {
+        script.remove();
+      }
+
+
+      // =====================================
+      // ถ้าเจอ Short URL
+      // =====================================
+
+      if (data.success && data.longUrl) {
+
+        window.location.replace(
+          data.longUrl
+        );
+
+        return;
+      }
+
+
+      // =====================================
+      // ถ้าไม่เจอ
+      // =====================================
+
+      document.body.innerHTML = `
+
+        <div
+          style="
+            text-align:center;
+            margin-top:60px;
+            font-family:Arial,sans-serif;
+          "
+        >
+
+          <h2>ไม่พบลิงก์นี้ค่ะ</h2>
+
+          <p>
+            Short URL นี้อาจไม่มีอยู่
+            หรือถูกลบไปแล้ว
+          </p>
+
+        </div>
+
+      `;
+
+    };
+
+
+    // =====================================
+    // เรียก Apps Script ด้วย JSONP
+    // =====================================
+
+    const script =
+      document.createElement("script");
+
+
+    script.id = callbackName;
+
+
+    script.src =
+      API_URL +
+      "?code=" +
+      encodeURIComponent(code) +
+      "&callback=" +
+      encodeURIComponent(callbackName);
+
+
+    // =====================================
+    // กรณีโหลด API ไม่สำเร็จ
+    // =====================================
+
+    script.onerror = function() {
+
+      document.body.innerHTML = `
+
+        <div
+          style="
+            text-align:center;
+            margin-top:60px;
+            font-family:Arial,sans-serif;
+          "
+        >
+
+          <h2>ไม่สามารถเปิดลิงก์ได้ค่ะ</h2>
+
+          <p>
+            กรุณาลองใหม่อีกครั้ง
+          </p>
+
+        </div>
+
+      `;
+
+    };
+
+
+    document.body.appendChild(script);
 
   </script>
 
 </body>
+
 </html>
