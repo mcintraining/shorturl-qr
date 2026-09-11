@@ -85,6 +85,11 @@ placeholder="ชื่อ/รายละเอียด (ถ้ามี)"
     function createShortUrl() {
       const longUrl =
         document.getElementById("longUrl").value.trim();
+      let finalUrl = longUrl;
+
+    if (!/^https?:\/\//i.test(finalUrl)) {
+    finalUrl = "https://" + finalUrl;
+    }
 
       const title =
         document.getElementById("title").value.trim();
@@ -178,7 +183,7 @@ placeholder="ชื่อ/รายละเอียด (ถ้ามี)"
       script.src =
         API_URL +
         "?longUrl=" +
-        encodeURIComponent(longUrl) +
+        encodeURIComponent(finalUrl) +
         "&title=" +
         encodeURIComponent(title) +
         "&requestId=" +
