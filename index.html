@@ -147,13 +147,15 @@ placeholder="ชื่อ/รายละเอียด (ถ้ามี)"
 
             <p><strong>Short URL</strong></p>
 
-            <a
-              id="shortUrl"
-              href="${shortUrl}"
-              target="_blank"
-            >
-              ${shortUrl}
-            </a>
+           <div>
+<a id="shortUrl" href="${shortUrl}" target="_blank">
+${shortUrl}
+</a>
+</div>
+
+<button type="button" onclick="copyShortUrl('${shortUrl}')">
+📋 Copy Short URL
+</button>
 
             <div>
               <img
@@ -203,6 +205,17 @@ placeholder="ชื่อ/รายละเอียด (ถ้ามี)"
 
       document.body.appendChild(script);
     }
+
+    function copyShortUrl(url) {
+navigator.clipboard.writeText(url)
+.then(function() {
+alert("คัดลอก Short URL แล้วค่ะ 🎉");
+})
+.catch(function() {
+alert("คัดลอกไม่สำเร็จค่ะ กรุณาคัดลอกลิงก์ด้วยตัวเอง");
+});
+}
+    
   </script>
 
 </body>
