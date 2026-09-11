@@ -72,6 +72,13 @@ placeholder="ชื่อ/รายละเอียด (ถ้ามี)"
 
 >
 
+<input
+type="text"
+id="alias"
+placeholder="Custom Alias (ถ้าต้องการ เช่น chem2026)"
+
+>
+
   <button id="createButton" onclick="createShortUrl()">
     สร้าง Short URL
   </button>
@@ -79,113 +86,162 @@ placeholder="ชื่อ/รายละเอียด (ถ้ามี)"
   <div id="result"></div>
 
   <script>
+
     const API_URL =
       "https://script.google.com/macros/s/AKfycbyX4QKp8avHVhcmALKy6VrTcopjpLX4c8PbXqX0pNis6RMDLy7eSmNka6NdEiylzopWfw/exec";
 
+
     function createShortUrl() {
+
       const longUrl =
         document.getElementById("longUrl").value.trim();
+
       let finalUrl = longUrl;
 
-    if (!/^https?:\/\//i.test(finalUrl)) {
-    finalUrl = "https://" + finalUrl;
-    }
+
+      if (!/^https?:\/\//i.test(finalUrl)) {
+        finalUrl = "https://" + finalUrl;
+      }
+
 
       const title =
         document.getElementById("title").value.trim();
 
+
+      const alias =
+        document.getElementById("alias").value.trim();
+
+
       const result =
         document.getElementById("result");
+
 
       const button =
         document.getElementById("createButton");
 
+
       if (!longUrl) {
+
         result.innerHTML =
           '<p class="error">กรุณาใส่ Long URL ก่อนค่ะ</p>';
+
         return;
       }
 
+
       button.disabled = true;
+
       result.innerHTML =
         "<p>กำลังสร้าง Short URL...</p>";
+
 
       const callbackName =
         "createCallback_" + Date.now();
 
+
       const requestId =
         "REQ-" + Date.now();
 
+
       window[callbackName] = function(data) {
+
         console.log("Create result:", data);
+
 
         delete window[callbackName];
 
+
         const script =
           document.getElementById(callbackName);
+
 
         if (script) {
           script.remove();
         }
 
+
         button.disabled = false;
+
 
         if (data.success && data.code) {
 
-          const shortCode = data.code;
+          const shortCode =
+            data.code;
+
 
           const shortUrl =
             "https://mcintraining.github.io/shorturl-qr/" +
             shortCode;
 
+
           const qrUrl =
             "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" +
             encodeURIComponent(shortUrl);
 
+
           result.innerHTML = `
+
             <h2>สร้างสำเร็จค่ะ 🎉</h2>
 
             <p><strong>Short URL</strong></p>
 
-           <div>
-<a id="shortUrl" href="${shortUrl}" target="_blank">
-${shortUrl}
-</a>
-</div>
+            <div>
+              <a
+                id="shortUrl"
+                href="${shortUrl}"
+                target="_blank"
+              >
+                ${shortUrl}
+              </a>
+            </div>
 
-<button type="button" onclick="copyShortUrl('${shortUrl}')">
-📋 Copy Short URL
-</button>
+            <button
+              type="button"
+              onclick="copyShortUrl('${shortUrl}')"
+            >
+              📋 Copy Short URL
+            </button>
 
             <div>
-  <img
-    id="qrCode"
-    src="${qrUrl}"
-    alt="QR Code"
-  >
-</div>
+              <img
+                id="qrCode"
+                src="${qrUrl}"
+                alt="QR Code"
+              >
+            </div>
 
-<p>
-  สแกน QR Code เพื่อเปิด Short URL
-</p>
+            <p>
+              สแกน QR Code เพื่อเปิด Short URL
+            </p>
 
-<button type="button" onclick="downloadQR('${qrUrl}', '${shortCode}')">
-  ⬇️ Download QR Code
-</button>
+            <button
+              type="button"
+              onclick="downloadQR('${qrUrl}', '${shortCode}')"
+            >
+              ⬇️ Download QR Code
+            </button>
 
           `;
 
         } else {
 
           result.innerHTML =
-            '<p class="error">สร้าง Short URL ไม่สำเร็จค่ะ</p>';
+            '<p class="error">' +
+            (data.error || "สร้าง Short URL ไม่สำเร็จค่ะ") +
+            '</p>';
+
         }
+
       };
+
 
       const script =
         document.createElement("script");
 
-      script.id = callbackName;
+
+      script.id =
+        callbackName;
+
 
       script.src =
         API_URL +
@@ -193,62 +249,117 @@ ${shortUrl}
         encodeURIComponent(finalUrl) +
         "&title=" +
         encodeURIComponent(title) +
+        "&alias=" +
+        encodeURIComponent(alias) +
         "&requestId=" +
         encodeURIComponent(requestId) +
         "&callback=" +
         encodeURIComponent(callbackName);
 
+
       script.onerror = function() {
 
         delete window[callbackName];
 
+
         button.disabled = false;
 
+
         result.innerHTML =
-          '<p class="error">ไม่สามารถเชื่อมต่อระบบได้ค่ะ กรุณาลองใหม่</p>';
+          '<p class="error">' +
+          'ไม่สามารถเชื่อมต่อระบบได้ค่ะ กรุณาลองใหม่' +
+          '</p>';
+
       };
 
+
       document.body.appendChild(script);
+
     }
 
+
     function copyShortUrl(url) {
-navigator.clipboard.writeText(url)
-.then(function() {
-alert("คัดลอก Short URL แล้วค่ะ 🎉");
-})
-.catch(function() {
-alert("คัดลอกไม่สำเร็จค่ะ กรุณาคัดลอกลิงก์ด้วยตัวเอง");
-});
-}
+
+      navigator.clipboard.writeText(url)
+
+        .then(function() {
+
+          alert("คัดลอก Short URL แล้วค่ะ 🎉");
+
+        })
+
+        .catch(function() {
+
+          alert(
+            "คัดลอกไม่สำเร็จค่ะ กรุณาคัดลอกลิงก์ด้วยตัวเอง"
+          );
+
+        });
+
+    }
+
 
     function downloadQR(qrUrl, shortCode) {
-  fetch(qrUrl)
-    .then(function(response) {
-      if (!response.ok) {
-        throw new Error("QR download failed");
-      }
 
-      return response.blob();
-    })
-    .then(function(blob) {
-      const blobUrl = URL.createObjectURL(blob);
+      fetch(qrUrl)
 
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = "QR-" + shortCode + ".png";
+        .then(function(response) {
 
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+          if (!response.ok) {
+            throw new Error("QR download failed");
+          }
 
-      URL.revokeObjectURL(blobUrl);
-    })
-    .catch(function(error) {
-      console.error("Download QR error:", error);
-      alert("ดาวน์โหลด QR Code ไม่สำเร็จค่ะ กรุณาลองใหม่");
-    });
-}
-    
+          return response.blob();
+
+        })
+
+        .then(function(blob) {
+
+          const blobUrl =
+            URL.createObjectURL(blob);
+
+
+          const link =
+            document.createElement("a");
+
+
+          link.href =
+            blobUrl;
+
+
+          link.download =
+            "QR-" + shortCode + ".png";
+
+
+          document.body.appendChild(link);
+
+
+          link.click();
+
+
+          link.remove();
+
+
+          URL.revokeObjectURL(blobUrl);
+
+        })
+
+        .catch(function(error) {
+
+          console.error(
+            "Download QR error:",
+            error
+          );
+
+
+          alert(
+            "ดาวน์โหลด QR Code ไม่สำเร็จค่ะ กรุณาลองใหม่"
+          );
+
+        });
+
+    }
+
   </script>
 
 </body>
