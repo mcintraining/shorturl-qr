@@ -169,9 +169,10 @@ ${shortUrl}
   สแกน QR Code เพื่อเปิด Short URL
 </p>
 
-<a href="${qrUrl}" download="QR-${shortCode}.png">
-  <button type="button">⬇️ Download QR Code</button>
-</a>
+<button type="button" onclick="downloadQR('${qrUrl}', '${shortCode}')">
+  ⬇️ Download QR Code
+</button>
+
           `;
 
         } else {
@@ -218,6 +219,34 @@ alert("คัดลอก Short URL แล้วค่ะ 🎉");
 .catch(function() {
 alert("คัดลอกไม่สำเร็จค่ะ กรุณาคัดลอกลิงก์ด้วยตัวเอง");
 });
+}
+
+    function downloadQR(qrUrl, shortCode) {
+  fetch(qrUrl)
+    .then(function(response) {
+      if (!response.ok) {
+        throw new Error("QR download failed");
+      }
+
+      return response.blob();
+    })
+    .then(function(blob) {
+      const blobUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = "QR-" + shortCode + ".png";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(blobUrl);
+    })
+    .catch(function(error) {
+      console.error("Download QR error:", error);
+      alert("ดาวน์โหลด QR Code ไม่สำเร็จค่ะ กรุณาลองใหม่");
+    });
 }
     
   </script>
