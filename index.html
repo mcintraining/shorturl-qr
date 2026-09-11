@@ -158,16 +158,20 @@ ${shortUrl}
 </button>
 
             <div>
-              <img
-                id="qrCode"
-                src="${qrUrl}"
-                alt="QR Code"
-              >
-            </div>
+  <img
+    id="qrCode"
+    src="${qrUrl}"
+    alt="QR Code"
+  >
+</div>
 
-            <p>
-              สแกน QR Code เพื่อเปิด Short URL
-            </p>
+<p>
+  สแกน QR Code เพื่อเปิด Short URL
+</p>
+
+<a href="${qrUrl}" download="QR-${shortCode}.png">
+  <button type="button">⬇️ Download QR Code</button>
+</a>
           `;
 
         } else {
