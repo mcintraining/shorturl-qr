@@ -1,10 +1,10 @@
 <!DOCTYPE html>
+
 <html lang="th">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Short URL + QR</title>
+  <title>Short URL + QR Code</title>
 
   <style>
     body {
@@ -12,9 +12,6 @@
       max-width: 600px;
       margin: 60px auto;
       padding: 20px;
-    }
-
-    h1 {
       text-align: center;
     }
 
@@ -27,137 +24,180 @@
     }
 
     button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
+      padding: 12px 24px;
       font-size: 16px;
       cursor: pointer;
+      margin-top: 10px;
     }
 
     #result {
       margin-top: 30px;
-      text-align: center;
     }
 
-    #qr {
-      margin-top: 20px;
+    #shortUrl {
+      display: inline-block;
+      margin: 10px 0 20px;
+      font-size: 18px;
+      word-break: break-all;
+    }
+
+    #qrCode {
+      width: 250px;
+      height: 250px;
+      margin-top: 10px;
     }
 
     .error {
-      color: red;
+      color: #b00020;
     }
   </style>
+
 </head>
 
 <body>
 
-  <h1>Short URL + QR</h1>
+  <h1>สร้าง Short URL</h1>
 
-  <input
-    type="url"
-    id="urlInput"
-    placeholder="วาง URL ที่ต้องการย่อ"
-  >
+<input
+type="url"
+id="longUrl"
+placeholder="วาง Long URL ที่นี่"
 
-  <button onclick="createShortUrl()">
+>
+
+<input
+type="text"
+id="title"
+placeholder="ชื่อ/รายละเอียด (ถ้ามี)"
+
+>
+
+  <button id="createButton" onclick="createShortUrl()">
     สร้าง Short URL
   </button>
 
   <div id="result"></div>
 
   <script>
-
     const API_URL =
-      "https://script.google.com/macros/s/AKfycbyX4QKp8avHVhcmALKy6VrTcopjpLX4c8PbXqX0pNis6RMDLy7eSmNka6NdEiylzopWfw/exec";
-
+      "https://script.google.com/macros/s/AKfcybyX4QKp8avHVhcmALKy6VrTcopjpLX4c8PbXqX0pNis6RMDLy7eSmNka6NdEiylzopWfw/exec";
 
     function createShortUrl() {
+      const longUrl =
+        document.getElementById("longUrl").value.trim();
 
- const button = document.querySelector("button");
+      const title =
+        document.getElementById("title").value.trim();
 
-  button.disabled = true;
-  button.textContent = "กำลังสร้าง...";
+      const result =
+        document.getElementById("result");
 
-  const url = document.getElementById("urlInput").value.trim();
-      
-      if (!url) {
-        alert("กรุณาใส่ URL ก่อนค่ะ");
+      const button =
+        document.getElementById("createButton");
+
+      if (!longUrl) {
+        result.innerHTML =
+          '<p class="error">กรุณาใส่ Long URL ก่อนค่ะ</p>';
         return;
       }
 
-      document.getElementById("result").innerHTML =
-        "กำลังสร้าง Short URL...";
+      button.disabled = true;
+      result.innerHTML =
+        "<p>กำลังสร้าง Short URL...</p>";
 
-
-      // สร้างชื่อ callback แบบสุ่ม
       const callbackName =
-        "shortUrlCallback_" + Date.now();
-const requestId = "REQ-" + Date.now();
-console.log("REQUEST ID:", requestId);
+        "createCallback_" + Date.now();
 
-      // สร้าง function สำหรับรับข้อมูลกลับจาก Apps Script
+      const requestId =
+        "REQ-" + Date.now();
+
       window[callbackName] = function(data) {
+        console.log("Create result:", data);
 
-        // ลบ callback หลังใช้งาน
         delete window[callbackName];
 
-
-        // ลบ script ที่สร้างขึ้น
-        const script = document.getElementById(callbackName);
+        const script =
+          document.getElementById(callbackName);
 
         if (script) {
           script.remove();
         }
 
+        button.disabled = false;
 
-        // ถ้าเกิด error
-        if (!data.success) {
+        if (data.success && data.code) {
 
-          document.getElementById("result").innerHTML =
-            '<div class="error">เกิดข้อผิดพลาด: ' +
-            data.error +
-            '</div>';
+          const shortCode = data.code;
 
-          return;
+          const shortUrl =
+            "https://mcintraining.github.io/shorturl-qr/" +
+            shortCode;
+
+          const qrUrl =
+            "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" +
+            encodeURIComponent(shortUrl);
+
+          result.innerHTML = `
+            <h2>สร้างสำเร็จค่ะ 🎉</h2>
+
+            <p><strong>Short URL</strong></p>
+
+            <a
+              id="shortUrl"
+              href="${shortUrl}"
+              target="_blank"
+            >
+              ${shortUrl}
+            </a>
+
+            <div>
+              <img
+                id="qrCode"
+                src="${qrUrl}"
+                alt="QR Code"
+              >
+            </div>
+
+            <p>
+              สแกน QR Code เพื่อเปิด Short URL
+            </p>
+          `;
+
+        } else {
+
+          result.innerHTML =
+            '<p class="error">สร้าง Short URL ไม่สำเร็จค่ะ</p>';
         }
-
-
-        // ได้ Code แล้ว
-        const shortCode = data.code;
-
-
-        // ตอนนี้ยังใช้แค่ Code เพื่อทดสอบ
-        document.getElementById("result").innerHTML =
-          "<p><strong>สร้างสำเร็จค่ะ 🎉</strong></p>" +
-          "<p>Short Code:</p>" +
-          "<h2>" + shortCode + "</h2>";
       };
 
+      const script =
+        document.createElement("script");
 
-      // สร้าง URL สำหรับ JSONP
-      const script = document.createElement("script");
+      script.id = callbackName;
 
-script.id = callbackName;
+      script.src =
+        API_URL +
+        "?longUrl=" +
+        encodeURIComponent(longUrl) +
+        "&title=" +
+        encodeURIComponent(title) +
+        "&requestId=" +
+        encodeURIComponent(requestId) +
+        "&callback=" +
+        encodeURIComponent(callbackName);
 
-script.src =
-  API_URL +
-  "?callback=" + encodeURIComponent(callbackName) +
-  "&longUrl=" + encodeURIComponent(url) +
-  "&requestId=" + encodeURIComponent(requestId);
+      script.onerror = function() {
 
-      
-script.onload = function() {
-  console.log("JSONP script โหลดสำเร็จ");
-};
+        delete window[callbackName];
 
-script.onerror = function() {
-  console.log("JSONP script โหลดไม่สำเร็จ");
-};
+        button.disabled = false;
 
-document.body.appendChild(script);
+        result.innerHTML =
+          '<p class="error">ไม่สามารถเชื่อมต่อระบบได้ค่ะ กรุณาลองใหม่</p>';
+      };
 
+      document.body.appendChild(script);
     }
-
   </script>
 
 </body>
