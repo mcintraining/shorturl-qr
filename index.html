@@ -4,51 +4,343 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Short URL + QR Code</title>
+
+  <title>Short URL & QR Code Generator</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 60px auto;
-      padding: 20px;
+      margin: 0;
+      padding: 24px 16px 40px;
+      font-family: Arial, "Noto Sans Thai", sans-serif;
+      background: #f7f8fc;
+      color: #333;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 620px;
+      margin: 30px auto 0;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 22px;
+      padding: 30px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.07);
+    }
+
+    .header {
       text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .header-icon {
+      font-size: 42px;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      color: #4b3f72;
+      line-height: 1.3;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: #777;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .field {
+      margin-bottom: 18px;
+      text-align: left;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #444;
+    }
+
+    .required {
+      color: #d9534f;
+      margin-left: 3px;
+    }
+
+    .field-description {
+      margin: 5px 0 7px;
+      font-size: 13px;
+      color: #888;
+      line-height: 1.5;
     }
 
     input {
       width: 100%;
-      box-sizing: border-box;
-      padding: 12px;
-      margin: 8px 0;
+      padding: 13px 14px;
+      border: 1.5px solid #d9dbe4;
+      border-radius: 12px;
+      background: #fff;
+      color: #333;
       font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     }
 
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
+    input::placeholder {
+      color: #aaa;
+    }
+
+    input:focus {
+      border-color: #8067b7;
+      box-shadow: 0 0 0 4px rgba(128, 103, 183, 0.12);
+    }
+
+    input.input-error {
+      border-color: #d9534f;
+      background: #fff8f8;
+      box-shadow: 0 0 0 3px rgba(217, 83, 79, 0.08);
+    }
+
+    input.input-valid {
+      border-color: #7d9f83;
+    }
+
+    .create-button {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-top: 4px;
+      background: #6f5aa8;
+      color: white;
+      font-size: 17px;
+      font-weight: 600;
       cursor: pointer;
-      margin-top: 10px;
+      transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
+      box-shadow: 0 5px 14px rgba(111, 90, 168, 0.25);
+    }
+
+    .create-button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 7px 18px rgba(111, 90, 168, 0.3);
+    }
+
+    .create-button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .create-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .button-content {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+    }
+
+    .spinner {
+      width: 17px;
+      height: 17px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     #result {
-      margin-top: 30px;
+      margin-top: 24px;
+    }
+
+    .message {
+      padding: 13px 15px;
+      border-radius: 12px;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .message.error {
+      background: #fff0f0;
+      border: 1px solid #f0b5b5;
+      color: #a52828;
+    }
+
+    .message.warning {
+      background: #fff8df;
+      border: 1px solid #ead28a;
+      color: #765d13;
+    }
+
+    .message.info {
+      background: #f3f0fa;
+      border: 1px solid #ddd5ef;
+      color: #5c5078;
+      text-align: center;
+    }
+
+    .success-card {
+      margin-top: 22px;
+      padding: 24px 20px;
+      border-radius: 18px;
+      background: #faf9fd;
+      border: 1px solid #e5e0ef;
+      text-align: center;
+    }
+
+    .success-title {
+      margin: 0 0 18px;
+      color: #4b3f72;
+      font-size: 21px;
+    }
+
+    .short-label {
+      margin: 0 0 7px;
+      font-size: 14px;
+      color: #777;
+      font-weight: 600;
     }
 
     #shortUrl {
-      display: inline-block;
-      margin: 10px 0 20px;
-      font-size: 18px;
+      display: block;
+      margin: 0 auto 15px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #fff;
+      border: 1px solid #e1deea;
+      color: #5b4792;
+      font-size: 17px;
+      font-weight: 600;
+      line-height: 1.5;
       word-break: break-all;
+      text-decoration: none;
+    }
+
+    #shortUrl:hover {
+      text-decoration: underline;
+    }
+
+    .secondary-button {
+      border: 1px solid #cfc8df;
+      border-radius: 11px;
+      padding: 10px 15px;
+      background: #fff;
+      color: #5b4b7d;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .secondary-button:hover:not(:disabled) {
+      background: #f5f2fa;
+      border-color: #b9add2;
+    }
+
+    .secondary-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .copy-feedback {
+      min-height: 20px;
+      margin: 7px 0 16px;
+      color: #5d8065;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .qr-wrapper {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid #e8e5ee;
     }
 
     #qrCode {
+      display: block;
       width: 250px;
       height: 250px;
-      margin-top: 10px;
+      max-width: 100%;
+      margin: 10px auto 14px;
+      background: #fff;
+      border-radius: 8px;
     }
 
-    .error {
-      color: #b00020;
+    .scan-text {
+      margin: 0 0 13px;
+      color: #777;
+      font-size: 14px;
+    }
+
+    .download-button {
+      min-width: 170px;
+    }
+
+    footer {
+      max-width: 620px;
+      margin: 22px auto 0;
+      padding: 0 10px;
+      text-align: center;
+      color: #888;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    footer strong {
+      color: #666;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 15px 12px 30px;
+      }
+
+      .container {
+        margin-top: 10px;
+      }
+
+      .card {
+        padding: 24px 18px;
+        border-radius: 18px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .header-icon {
+        font-size: 36px;
+      }
+
+      input {
+        font-size: 16px;
+        padding: 12px 13px;
+      }
+
+      .success-card {
+        padding: 21px 15px;
+      }
+
+      #shortUrl {
+        font-size: 16px;
+      }
     }
   </style>
 
@@ -56,83 +348,297 @@
 
 <body>
 
-  <h1>สร้าง Short URL</h1>
+  <div class="container">
 
-<input
-type="url"
-id="longUrl"
-placeholder="วาง Long URL ที่นี่"
+```
+<div class="card">
 
->
+  <div class="header">
+    <div class="header-icon">🔗</div>
 
-<input
-type="text"
-id="title"
-placeholder="ชื่อ/รายละเอียด (ถ้ามี)"
+    <h1>Short URL & QR Code</h1>
 
->
+    <p class="subtitle">
+      สร้างลิงก์สั้นพร้อม QR Code ได้ในครั้งเดียว ✨
+    </p>
+  </div>
 
-<input
-type="text"
-id="alias"
-placeholder="Custom Alias (ถ้าต้องการ เช่น chem2026)"
+  <div class="field">
+    <label for="longUrl">
+      Long URL <span class="required">*</span>
+    </label>
 
->
+    <input
+      type="url"
+      id="longUrl"
+      placeholder="วาง Long URL ที่นี่"
+      autocomplete="url"
+    >
+  </div>
 
-  <button id="createButton" onclick="createShortUrl()">
-    สร้าง Short URL
+  <div class="field">
+    <label for="title">
+      ชื่อรายการ (ถ้ามี)
+    </label>
+
+    <p class="field-description">
+      ใช้สำหรับจดจำรายการในระบบ ไม่แสดงอยู่ใน Short URL
+    </p>
+
+    <input
+      type="text"
+      id="title"
+      placeholder="เช่น Chemistry Competition 2026"
+    >
+  </div>
+
+  <div class="field">
+    <label for="alias">
+      Custom Link (ถ้าต้องการ)
+    </label>
+
+    <p class="field-description">
+      ตั้งชื่อ Short Link เองได้ เช่น <strong>chem2026</strong>
+    </p>
+
+    <input
+      type="text"
+      id="alias"
+      placeholder="เช่น chem2026"
+      autocomplete="off"
+    >
+  </div>
+
+  <div id="validationMessage"></div>
+
+  <button
+    type="button"
+    id="createButton"
+    class="create-button"
+    onclick="createShortUrl()"
+  >
+    <span class="button-content">
+      <span id="buttonText">✨ สร้าง Short URL</span>
+    </span>
   </button>
 
   <div id="result"></div>
 
+</div>
+
+<footer>
+  <strong>Short URL & QR Code Generator</strong><br>
+  โครงการโดยงาน IT คณะวิทยาศาสตร์ มหาวิทยาลัยศรีนครินทรวิโรฒ<br>
+  สำหรับการใช้งานภายในหรือกลุ่มผู้ใช้งานที่เกี่ยวข้อง
+  <br>
+  ทีมผู้พัฒนาไม่รับผิดชอบต่อปัญหาที่อาจเกิดขึ้นจากการนำลิงก์ไปใช้งาน
+</footer>
+```
+
+  </div>
+
   <script>
 
     const API_URL =
-      "https://script.google.com/macros/s/AKfycbyX4QKp8avHVhcmALKy6VrTcopjpLX4c8PbXqX0pNis6RMDLy7eSmNka6NdEiylzopWfw/exec";
+      "https://script.google.com/macros/s/AKfycbyX4QKp8avHVhcmALKy6VrTcopjpLX4c8PbqX0pNis6RMDLy7eSmNka6NdEiylzopWfw/exec";
+
+    const SHORT_URL_BASE =
+      "https://mcintraining.github.io/shorturl-qr/";
+
+
+    function getElement(id) {
+      return document.getElementById(id);
+    }
+
+
+    function showMessage(type, message) {
+
+      const validationMessage =
+        getElement("validationMessage");
+
+      const icon =
+        type === "error"
+          ? "❌"
+          : type === "warning"
+            ? "⚠️"
+            : "ℹ️";
+
+      validationMessage.innerHTML =
+        '<div class="message ' +
+        type +
+        '">' +
+        icon +
+        " " +
+        message +
+        "</div>";
+    }
+
+
+    function clearMessage() {
+
+      getElement("validationMessage").innerHTML = "";
+
+    }
+
+
+    function setInputError(input, isError) {
+
+      if (isError) {
+        input.classList.add("input-error");
+      } else {
+        input.classList.remove("input-error");
+      }
+
+    }
+
+
+    function validateForm() {
+
+      const longUrl =
+        getElement("longUrl");
+
+      const alias =
+        getElement("alias");
+
+      let valid = true;
+
+
+      setInputError(longUrl, false);
+      setInputError(alias, false);
+      clearMessage();
+
+
+      if (!longUrl.value.trim()) {
+
+        setInputError(longUrl, true);
+
+        showMessage(
+          "error",
+          "กรุณาใส่ Long URL ก่อนค่ะ"
+        );
+
+        longUrl.focus();
+
+        return false;
+      }
+
+
+      const aliasValue =
+        alias.value.trim();
+
+
+      if (aliasValue) {
+
+        if (aliasValue.length < 3 || aliasValue.length > 30) {
+
+          setInputError(alias, true);
+
+          showMessage(
+            "warning",
+            "Custom Link ต้องมีความยาว 3–30 ตัวอักษรค่ะ"
+          );
+
+          alias.focus();
+
+          return false;
+        }
+
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(aliasValue)) {
+
+          setInputError(alias, true);
+
+          showMessage(
+            "warning",
+            "Custom Link ใช้ได้เฉพาะตัวอักษรภาษาอังกฤษ ตัวเลข - และ _ เท่านั้นค่ะ"
+          );
+
+          alias.focus();
+
+          return false;
+        }
+
+      }
+
+
+      return valid;
+
+    }
+
+
+    function setLoading(isLoading) {
+
+      const button =
+        getElement("createButton");
+
+      const buttonText =
+        getElement("buttonText");
+
+
+      button.disabled = isLoading;
+
+
+      if (isLoading) {
+
+        buttonText.innerHTML =
+          '<span class="spinner"></span> กำลังสร้าง Short URL...';
+
+      } else {
+
+        buttonText.textContent =
+          "✨ สร้าง Short URL";
+
+      }
+
+    }
 
 
     function createShortUrl() {
 
-      const longUrl =
-        document.getElementById("longUrl").value.trim();
+      const longUrlInput =
+        getElement("longUrl");
 
-      let finalUrl = longUrl;
+      const titleInput =
+        getElement("title");
 
-
-      if (!/^https?:\/\//i.test(finalUrl)) {
-        finalUrl = "https://" + finalUrl;
-      }
-
-
-      const title =
-        document.getElementById("title").value.trim();
-
-
-      const alias =
-        document.getElementById("alias").value.trim();
-
+      const aliasInput =
+        getElement("alias");
 
       const result =
-        document.getElementById("result");
+        getElement("result");
 
 
-      const button =
-        document.getElementById("createButton");
-
-
-      if (!longUrl) {
-
-        result.innerHTML =
-          '<p class="error">กรุณาใส่ Long URL ก่อนค่ะ</p>';
-
+      if (!validateForm()) {
         return;
       }
 
 
-      button.disabled = true;
+      const longUrl =
+        longUrlInput.value.trim();
+
+
+      let finalUrl =
+        longUrl;
+
+
+      if (!/^https?:\/\//i.test(finalUrl)) {
+        finalUrl =
+          "https://" + finalUrl;
+      }
+
+
+      const title =
+        titleInput.value.trim();
+
+
+      const alias =
+        aliasInput.value.trim();
+
+
+      setLoading(true);
 
       result.innerHTML =
-        "<p>กำลังสร้าง Short URL...</p>";
+        '<div class="message info">กำลังติดต่อระบบเพื่อสร้างลิงก์ค่ะ...</div>';
 
 
       const callbackName =
@@ -143,96 +649,163 @@ placeholder="Custom Alias (ถ้าต้องการ เช่น chem2026)
         "REQ-" + Date.now();
 
 
-      window[callbackName] = function(data) {
-
-        console.log("Create result:", data);
+      let completed = false;
 
 
-        delete window[callbackName];
+      window[callbackName] =
+        function(data) {
+
+          if (completed) {
+            return;
+          }
+
+          completed = true;
 
 
-        const script =
-          document.getElementById(callbackName);
+          console.log(
+            "Create result:",
+            data
+          );
 
 
-        if (script) {
-          script.remove();
-        }
+          delete window[callbackName];
 
 
-        button.disabled = false;
+          const script =
+            getElement(callbackName);
 
 
-        if (data.success && data.code) {
-
-          const shortCode =
-            data.code;
-
-
-          const shortUrl =
-            "https://mcintraining.github.io/shorturl-qr/" +
-            shortCode;
+          if (script) {
+            script.remove();
+          }
 
 
-          const qrUrl =
-            "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" +
-            encodeURIComponent(shortUrl);
+          setLoading(false);
 
 
-          result.innerHTML = `
+          if (data.success && data.code) {
 
-            <h2>สร้างสำเร็จค่ะ 🎉</h2>
+            const shortCode =
+              data.code;
 
-            <p><strong>Short URL</strong></p>
 
-            <div>
-              <a
-                id="shortUrl"
-                href="${shortUrl}"
-                target="_blank"
-              >
-                ${shortUrl}
-              </a>
-            </div>
+            const shortUrl =
+              SHORT_URL_BASE +
+              shortCode;
 
-            <button
-              type="button"
-              onclick="copyShortUrl('${shortUrl}')"
-            >
-              📋 Copy Short URL
-            </button>
 
-            <div>
-              <img
-                id="qrCode"
-                src="${qrUrl}"
-                alt="QR Code"
-              >
-            </div>
+            const qrUrl =
+              "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" +
+              encodeURIComponent(shortUrl);
 
-            <p>
-              สแกน QR Code เพื่อเปิด Short URL
-            </p>
 
-            <button
-              type="button"
-              onclick="downloadQR('${qrUrl}', '${shortCode}')"
-            >
-              ⬇️ Download QR Code
-            </button>
+            result.innerHTML = `
 
-          `;
+              <div class="success-card">
 
-        } else {
+                <h2 class="success-title">
+                  🎉 สร้าง Short URL สำเร็จค่ะ
+                </h2>
 
-          result.innerHTML =
-            '<p class="error">' +
-            (data.error || "สร้าง Short URL ไม่สำเร็จค่ะ") +
-            '</p>';
+                <p class="short-label">
+                  Short URL
+                </p>
 
-        }
+                <a
+                  id="shortUrl"
+                  href="${shortUrl}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  ${shortUrl}
+                </a>
 
-      };
+                <button
+                  type="button"
+                  id="copyButton"
+                  class="secondary-button"
+                  onclick="copyShortUrl('${shortUrl}')"
+                >
+                  📋 Copy Short URL
+                </button>
+
+                <div
+                  id="copyFeedback"
+                  class="copy-feedback"
+                  aria-live="polite"
+                ></div>
+
+                <div class="qr-wrapper">
+
+                  <p class="short-label">
+                    QR Code
+                  </p>
+
+                  <img
+                    id="qrCode"
+                    src="${qrUrl}"
+                    alt="QR Code สำหรับ ${shortUrl}"
+                  >
+
+                  <p class="scan-text">
+                    สแกน QR Code เพื่อเปิด Short URL
+                  </p>
+
+                  <button
+                    type="button"
+                    id="downloadButton"
+                    class="secondary-button download-button"
+                    onclick="downloadQR('${qrUrl}', '${shortCode}')"
+                  >
+                    ⬇️ Download QR Code
+                  </button>
+
+                </div>
+
+              </div>
+
+            `;
+
+          } else {
+
+            const errorMessage =
+              data.error ||
+              "สร้าง Short URL ไม่สำเร็จค่ะ";
+
+
+            const isDuplicate =
+              errorMessage.toLowerCase().includes("already") ||
+              errorMessage.includes("ซ้ำ") ||
+              errorMessage.includes("ถูกใช้งานแล้ว");
+
+
+            if (isDuplicate) {
+
+              result.innerHTML =
+                '<div class="message error">' +
+                '❌ Custom Link นี้ถูกใช้งานแล้ว กรุณาเลือกชื่ออื่นค่ะ' +
+                '</div>';
+
+              setInputError(
+                aliasInput,
+                true
+              );
+
+              aliasInput.focus();
+
+            } else {
+
+              result.innerHTML =
+                '<div class="message error">' +
+                '❌ ' +
+                errorMessage +
+                '</div>';
+
+            }
+
+          }
+
+        };
 
 
       const script =
@@ -257,20 +830,28 @@ placeholder="Custom Alias (ถ้าต้องการ เช่น chem2026)
         encodeURIComponent(callbackName);
 
 
-      script.onerror = function() {
+      script.onerror =
+        function() {
 
-        delete window[callbackName];
+          if (completed) {
+            return;
+          }
+
+          completed = true;
 
 
-        button.disabled = false;
+          delete window[callbackName];
 
 
-        result.innerHTML =
-          '<p class="error">' +
-          'ไม่สามารถเชื่อมต่อระบบได้ค่ะ กรุณาลองใหม่' +
-          '</p>';
+          setLoading(false);
 
-      };
+
+          result.innerHTML =
+            '<div class="message error">' +
+            '❌ ไม่สามารถเชื่อมต่อระบบได้ค่ะ กรุณาลองใหม่' +
+            '</div>';
+
+        };
 
 
       document.body.appendChild(script);
@@ -280,19 +861,23 @@ placeholder="Custom Alias (ถ้าต้องการ เช่น chem2026)
 
     function copyShortUrl(url) {
 
+      const feedback =
+        getElement("copyFeedback");
+
+
       navigator.clipboard.writeText(url)
 
         .then(function() {
 
-          alert("คัดลอก Short URL แล้วค่ะ 🎉");
+          feedback.textContent =
+            "✓ คัดลอก Short URL แล้วค่ะ";
 
         })
 
         .catch(function() {
 
-          alert(
-            "คัดลอกไม่สำเร็จค่ะ กรุณาคัดลอกลิงก์ด้วยตัวเอง"
-          );
+          feedback.textContent =
+            "ไม่สามารถคัดลอกอัตโนมัติได้ค่ะ กรุณาคัดลอกลิงก์ด้วยตัวเอง";
 
         });
 
@@ -300,6 +885,23 @@ placeholder="Custom Alias (ถ้าต้องการ เช่น chem2026)
 
 
     function downloadQR(qrUrl, shortCode) {
+
+      const button =
+        getElement("downloadButton");
+
+
+      const originalText =
+        button.innerHTML;
+
+
+      button.disabled = true;
+
+      button.innerHTML =
+        '<span class="button-content">' +
+        '<span class="spinner" style="border-color: rgba(91,75,125,0.3); border-top-color: #5b4b7d;"></span>' +
+        'กำลังดาวน์โหลด...' +
+        '</span>';
+
 
       fetch(qrUrl)
 
@@ -342,6 +944,12 @@ placeholder="Custom Alias (ถ้าต้องการ เช่น chem2026)
 
           URL.revokeObjectURL(blobUrl);
 
+
+          button.disabled = false;
+
+          button.innerHTML =
+            originalText;
+
         })
 
         .catch(function(error) {
@@ -352,13 +960,114 @@ placeholder="Custom Alias (ถ้าต้องการ เช่น chem2026)
           );
 
 
-          alert(
-            "ดาวน์โหลด QR Code ไม่สำเร็จค่ะ กรุณาลองใหม่"
-          );
+          button.disabled = false;
+
+          button.innerHTML =
+            originalText;
+
+
+          const result =
+            getElement("result");
+
+
+          const oldMessage =
+            result.querySelector(".success-card");
+
+
+          if (oldMessage) {
+
+            const message =
+              document.createElement("div");
+
+
+            message.className =
+              "message error";
+
+
+            message.innerHTML =
+              "❌ ดาวน์โหลด QR Code ไม่สำเร็จค่ะ กรุณาลองใหม่";
+
+
+            oldMessage.parentNode.insertBefore(
+              message,
+              oldMessage
+            );
+
+          }
 
         });
 
     }
+
+
+    getElement("longUrl").addEventListener(
+      "input",
+      function() {
+
+        setInputError(
+          this,
+          false
+        );
+
+        clearMessage();
+
+      }
+    );
+
+
+    getElement("alias").addEventListener(
+      "input",
+      function() {
+
+        setInputError(
+          this,
+          false
+        );
+
+        clearMessage();
+
+
+        const value =
+          this.value.trim();
+
+
+        if (!value) {
+          return;
+        }
+
+
+        if (value.length > 30) {
+
+          setInputError(
+            this,
+            true
+          );
+
+          showMessage(
+            "warning",
+            "Custom Link ต้องมีความยาว 3–30 ตัวอักษรค่ะ"
+          );
+
+          return;
+        }
+
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
+
+          setInputError(
+            this,
+            true
+          );
+
+          showMessage(
+            "warning",
+            "Custom Link ใช้ได้เฉพาะตัวอักษรภาษาอังกฤษ ตัวเลข - และ _ เท่านั้นค่ะ"
+          );
+
+        }
+
+      }
+    );
 
   </script>
 
