@@ -350,89 +350,88 @@
 
   <div class="container">
 
+    <div class="card">
 
-<div class="card">
+      <div class="header">
+        <div class="header-icon">🔗</div>
 
-  <div class="header">
-    <div class="header-icon">🔗</div>
+        <h1>Short URL & QR Code</h1>
 
-    <h1>Short URL & QR Code</h1>
+        <p class="subtitle">
+          สร้างลิงก์สั้นพร้อม QR Code ได้ในครั้งเดียว ✨
+        </p>
+      </div>
 
-    <p class="subtitle">
-      สร้างลิงก์สั้นพร้อม QR Code ได้ในครั้งเดียว ✨
-    </p>
-  </div>
+      <div class="field">
+        <label for="longUrl">
+          Long URL <span class="required">*</span>
+        </label>
 
-  <div class="field">
-    <label for="longUrl">
-      Long URL <span class="required">*</span>
-    </label>
+        <input
+          type="url"
+          id="longUrl"
+          placeholder="วาง Long URL ที่นี่"
+          autocomplete="url"
+        >
+      </div>
 
-    <input
-      type="url"
-      id="longUrl"
-      placeholder="วาง Long URL ที่นี่"
-      autocomplete="url"
-    >
-  </div>
+      <div class="field">
+        <label for="title">
+          ชื่อรายการ (ถ้ามี)
+        </label>
 
-  <div class="field">
-    <label for="title">
-      ชื่อรายการ (ถ้ามี)
-    </label>
+        <p class="field-description">
+          ใช้สำหรับจดจำรายการในระบบ ไม่แสดงอยู่ใน Short URL
+        </p>
 
-    <p class="field-description">
-      ใช้สำหรับจดจำรายการในระบบ ไม่แสดงอยู่ใน Short URL
-    </p>
+        <input
+          type="text"
+          id="title"
+          placeholder="เช่น Chemistry Competition 2026"
+        >
+      </div>
 
-    <input
-      type="text"
-      id="title"
-      placeholder="เช่น Chemistry Competition 2026"
-    >
-  </div>
+      <div class="field">
+        <label for="alias">
+          Custom Link (ถ้าต้องการ)
+        </label>
 
-  <div class="field">
-    <label for="alias">
-      Custom Link (ถ้าต้องการ)
-    </label>
+        <p class="field-description">
+          ตั้งชื่อ Short Link เองได้ เช่น <strong>ggwp</strong>
+        </p>
 
-    <p class="field-description">
-      ตั้งชื่อ Short Link เองได้ เช่น <strong>ggwp</strong>
-    </p>
+        <input
+          type="text"
+          id="alias"
+          placeholder="เช่น ggwp"
+          autocomplete="off"
+        >
+      </div>
 
-    <input
-      type="text"
-      id="alias"
-      placeholder="เช่น ggwp"
-      autocomplete="off"
-    >
-  </div>
+      <div id="validationMessage"></div>
 
-  <div id="validationMessage"></div>
+      <button
+        type="button"
+        id="createButton"
+        class="create-button"
+        onclick="createShortUrl()"
+      >
+        <span class="button-content">
+          <span id="buttonText">✨ สร้าง Short URL</span>
+        </span>
+      </button>
 
-  <button
-    type="button"
-    id="createButton"
-    class="create-button"
-    onclick="createShortUrl()"
-  >
-    <span class="button-content">
-      <span id="buttonText">✨ สร้าง Short URL</span>
-    </span>
-  </button>
+      <div id="result"></div>
 
-  <div id="result"></div>
+    </div>
 
-</div>
-
-<footer>
-  <strong>Short URL & QR Code Generator</strong><br>
-  โครงการโดยงาน IT คณะวิทยาศาสตร์ มหาวิทยาลัยศรีนครินทรวิโรฒ<br>
-  สำหรับการใช้งานภายในหรือกลุ่มผู้ใช้งานที่เกี่ยวข้อง
-  <br>
-  ทีมผู้พัฒนาไม่รับผิดชอบต่อปัญหาที่อาจเกิดขึ้นจากการนำลิงก์ไปใช้งาน
-</footer>
+    <footer>
+      <strong>Short URL & QR Code Generator</strong><br>
+      โครงการโดยงาน IT คณะวิทยาศาสตร์ มหาวิทยาลัยศรีนครินทรวิโรฒ<br>
+      สำหรับการใช้งานภายในหรือกลุ่มผู้ใช้งานที่เกี่ยวข้อง
+      <br>
+      ทีมผู้พัฒนาไม่รับผิดชอบต่อปัญหาที่อาจเกิดขึ้นจากการนำลิงก์ไปใช้งาน
+    </footer>
 
   </div>
 
@@ -474,9 +473,7 @@
 
 
     function clearMessage() {
-
       getElement("validationMessage").innerHTML = "";
-
     }
 
 
@@ -487,7 +484,6 @@
       } else {
         input.classList.remove("input-error");
       }
-
     }
 
 
@@ -556,12 +552,10 @@
 
           return false;
         }
-
       }
 
 
       return valid;
-
     }
 
 
@@ -586,9 +580,7 @@
 
         buttonText.textContent =
           "✨ สร้าง Short URL";
-
       }
-
     }
 
 
@@ -621,6 +613,7 @@
 
 
       if (!/^https?:\/\//i.test(finalUrl)) {
+
         finalUrl =
           "https://" + finalUrl;
       }
@@ -628,7 +621,6 @@
 
       const title =
         titleInput.value.trim();
-
 
       const alias =
         aliasInput.value.trim();
@@ -657,6 +649,7 @@
           if (completed) {
             return;
           }
+
 
           completed = true;
 
@@ -785,10 +778,12 @@
                 '❌ Custom Link นี้ถูกใช้งานแล้ว กรุณาเลือกชื่ออื่นค่ะ' +
                 '</div>';
 
+
               setInputError(
                 aliasInput,
                 true
               );
+
 
               aliasInput.focus();
 
@@ -799,9 +794,7 @@
                 '❌ ' +
                 errorMessage +
                 '</div>';
-
             }
-
           }
 
         };
@@ -815,10 +808,45 @@
         callbackName;
 
 
+      /*
+       * สำคัญ:
+       * ถ้า Long URL มีภาษาไทยอยู่ในรูป percent-encoded
+       * เช่น %e0%b8%97...
+       *
+       * decodeURI() จะเปลี่ยนเฉพาะส่วนที่เป็น encoded
+       * ของ URL ให้กลับเป็น Unicode โดยยังคงโครงสร้าง URL
+       * และ reserved characters เอาไว้
+       *
+       * จากนั้น encodeURIComponent() จะ encode URL
+       * สำหรับส่งเป็น query parameter อีกครั้ง
+       *
+       * ช่วยหลีกเลี่ยงการส่ง %25e0... จากการ encode
+       * ซ้อนกับ percent-encoded Thai URL เดิม
+       */
+      let requestUrl =
+        finalUrl;
+
+      try {
+
+        requestUrl =
+          decodeURI(finalUrl);
+
+      } catch (error) {
+
+        console.warn(
+          "Could not normalize encoded URL:",
+          error
+        );
+
+        requestUrl =
+          finalUrl;
+      }
+
+
       script.src =
         API_URL +
         "?longUrl=" +
-        encodeURIComponent(finalUrl) +
+        encodeURIComponent(requestUrl) +
         "&title=" +
         encodeURIComponent(title) +
         "&alias=" +
@@ -835,6 +863,7 @@
           if (completed) {
             return;
           }
+
 
           completed = true;
 
@@ -879,7 +908,6 @@
             "ไม่สามารถคัดลอกอัตโนมัติได้ค่ะ กรุณาคัดลอกลิงก์ด้วยตัวเอง";
 
         });
-
     }
 
 
@@ -894,6 +922,7 @@
 
 
       button.disabled = true;
+
 
       button.innerHTML =
         '<span class="button-content">' +
@@ -910,9 +939,11 @@
             throw new Error("QR download failed");
           }
 
+
           return response.blob();
 
         })
+
 
         .then(function(blob) {
 
@@ -946,10 +977,12 @@
 
           button.disabled = false;
 
+
           button.innerHTML =
             originalText;
 
         })
+
 
         .catch(function(error) {
 
@@ -960,6 +993,7 @@
 
 
           button.disabled = false;
+
 
           button.innerHTML =
             originalText;
@@ -1042,10 +1076,12 @@
             true
           );
 
+
           showMessage(
             "warning",
             "Custom Link ต้องมีความยาว 3–30 ตัวอักษรค่ะ"
           );
+
 
           return;
         }
@@ -1057,6 +1093,7 @@
             this,
             true
           );
+
 
           showMessage(
             "warning",
