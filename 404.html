@@ -188,7 +188,7 @@
 
 <body>
 
-  <div class="loading-card" id="loadingBox">
+  <div class="loading-card">
 
     <div class="cute-icon">🐾</div>
 
@@ -219,39 +219,111 @@
 
   <script>
 
+    // ==================================================
+    // API
+    // ==================================================
+
     const API_URL =
       "https://script.google.com/macros/s/AKfycbyX4QKp8avHVhcmALKy6VrTcopjpLX4c8PbXqX0pNis6RMDLy7eSmNka6NdEiylzopWfw/exec";
 
 
-    const path = window.location.pathname;
+    // ==================================================
+    // อ่าน Short Code จาก URL
+    // ==================================================
+
+    const path =
+      window.location.pathname;
+
+    const pathParts =
+      path.split("/").filter(Boolean);
 
     const code =
-      path.split("/").filter(Boolean).pop();
+      pathParts.length
+        ? pathParts[pathParts.length - 1]
+        : "";
 
 
-    console.log("Short code:", code);
+    console.log(
+      "Short code:",
+      code
+    );
 
+
+    // ==================================================
+    // Elements
+    // ==================================================
 
     const loadingMessage =
-      document.getElementById("loadingMessage");
+      document.getElementById(
+        "loadingMessage"
+      );
 
     const elapsedElement =
-      document.getElementById("elapsed");
+      document.getElementById(
+        "elapsed"
+      );
 
 
-    const startTime = Date.now();
+    // ==================================================
+    // ตัวแปรควบคุมการทำงาน
+    // ==================================================
+
+    const startTime =
+      Date.now();
 
 
-    let retryTimer = null;
+    let finished =
+      false;
 
-    let timeoutTimer = null;
 
-    let finished = false;
+    let currentScript =
+      null;
 
+
+    let attemptTimeout =
+      null;
+
+
+    let retryTimer =
+      null;
+
+
+    let callbackCounter =
+      0;
+
+
+    let attemptNumber =
+      0;
+
+
+    // ==================================================
+    // การตั้งค่า
+    // ==================================================
+
+    // แต่ละ request ให้เวลาสูงสุด 8 วินาที
+    const REQUEST_TIMEOUT =
+      8000;
+
+
+    // เว้นช่วงก่อนลอง request ใหม่
+    const RETRY_DELAY =
+      1000;
+
+
+    // เวลารวมสูงสุดก่อนแสดง error
+    const TOTAL_TIMEOUT =
+      45000;
+
+
+    // ==================================================
+    // Loading Message
+    // ==================================================
 
     function updateLoadingMessage() {
 
-      if (finished) return;
+      if (finished) {
+        return;
+      }
 
 
       const seconds =
@@ -294,12 +366,23 @@
       1000
     );
 
+
     updateLoadingMessage();
 
 
-    function showError(title, message) {
+    // ==================================================
+    // แสดง Error
+    // ==================================================
+
+    function showError(
+      title,
+      message
+    ) {
 
       finished = true;
+
+
+      cleanup();
 
 
       document.body.innerHTML = `
@@ -325,35 +408,136 @@
     }
 
 
-    function cleanup() {
+    // ==================================================
+    // Cleanup request ปัจจุบัน
+    // ==================================================
 
-      if (retryTimer) {
+    function cleanupCurrentRequest() {
 
-        clearTimeout(retryTimer);
+      if (attemptTimeout) {
 
-        retryTimer = null;
+        clearTimeout(
+          attemptTimeout
+        );
+
+        attemptTimeout = null;
 
       }
 
 
-      if (timeoutTimer) {
+      if (currentScript) {
 
-        clearTimeout(timeoutTimer);
+        currentScript.remove();
 
-        timeoutTimer = null;
+        currentScript = null;
 
       }
 
     }
 
 
+    // ==================================================
+    // Cleanup ทั้งหมด
+    // ==================================================
+
+    function cleanup() {
+
+      cleanupCurrentRequest();
+
+
+      if (retryTimer) {
+
+        clearTimeout(
+          retryTimer
+        );
+
+        retryTimer = null;
+
+      }
+
+    }
+
+
+    // ==================================================
+    // Retry
+    // ==================================================
+
+    function scheduleRetry() {
+
+      if (finished) {
+        return;
+      }
+
+
+      // ถ้าเกินเวลารวมแล้ว
+      if (
+        Date.now() - startTime >=
+        TOTAL_TIMEOUT
+      ) {
+
+        showError(
+          "เปิด link ไม่สำเร็จค่ะ",
+          "ระบบใช้เวลานานเกินไป กรุณาลองเปิดใหม่อีกครั้งนะคะ"
+        );
+
+        return;
+
+      }
+
+
+      if (retryTimer) {
+        return;
+      }
+
+
+      retryTimer =
+        setTimeout(
+          function() {
+
+            retryTimer = null;
+
+            requestLookup();
+
+          },
+          RETRY_DELAY
+        );
+
+    }
+
+
+    // ==================================================
+    // ขอข้อมูล Short Code
+    // ==================================================
+
     function requestLookup() {
 
-      if (finished) return;
+      if (finished) {
+        return;
+      }
 
+
+      cleanupCurrentRequest();
+
+
+      attemptNumber++;
+      callbackCounter++;
+
+
+      console.log(
+        "Lookup attempt:",
+        attemptNumber
+      );
+
+
+      // ------------------------------------------------
+      // สร้าง callback ใหม่ทุกครั้ง
+      // ------------------------------------------------
 
       const callbackName =
-        "lookupCallback_" + Date.now();
+        "lookupCallback_" +
+        Date.now() +
+        "_" +
+        callbackCounter;
 
 
       window[callbackName] =
@@ -365,10 +549,13 @@
           );
 
 
-          if (finished) return;
+          if (finished) {
+            return;
+          }
 
 
           finished = true;
+
 
           cleanup();
 
@@ -376,18 +563,12 @@
           delete window[callbackName];
 
 
-          const script =
-            document.getElementById(
-              callbackName
-            );
-
-
-          if (script) {
-            script.remove();
-          }
-
+          // --------------------------------------------
+          // เปิด Long URL
+          // --------------------------------------------
 
           if (
+            data &&
             data.success &&
             data.longUrl
           ) {
@@ -401,6 +582,10 @@
           }
 
 
+          // --------------------------------------------
+          // ไม่พบ Short Code
+          // --------------------------------------------
+
           showError(
             "ไม่พบ link นี้ค่ะ",
             "Short URL นี้อาจไม่มีอยู่ หรือถูกลบไปแล้ว"
@@ -409,12 +594,30 @@
         };
 
 
+      // ==================================================
+      // สร้าง JSONP Script
+      // ==================================================
+
       const script =
-        document.createElement("script");
+        document.createElement(
+          "script"
+        );
+
+
+      currentScript =
+        script;
 
 
       script.id =
         callbackName;
+
+
+      // ------------------------------------------------
+      // เพิ่ม timestamp เพื่อป้องกัน cache
+      // ------------------------------------------------
+
+      const cacheBuster =
+        Date.now();
 
 
       script.src =
@@ -422,13 +625,21 @@
         "?code=" +
         encodeURIComponent(code) +
         "&callback=" +
-        encodeURIComponent(callbackName);
+        encodeURIComponent(callbackName) +
+        "&t=" +
+        cacheBuster;
 
+
+      // ==================================================
+      // กรณี Browser แจ้ง Error
+      // ==================================================
 
       script.onerror =
         function() {
 
-          if (finished) return;
+          if (finished) {
+            return;
+          }
 
 
           console.log(
@@ -439,19 +650,48 @@
           delete window[callbackName];
 
 
-          script.remove();
+          cleanupCurrentRequest();
 
 
-          retryTimer =
-            setTimeout(
-              function() {
-                requestLookup();
-              },
-              1000
-            );
+          scheduleRetry();
 
         };
 
+
+      // ==================================================
+      // Timeout ของ request รอบนี้
+      // ==================================================
+
+      attemptTimeout =
+        setTimeout(
+          function() {
+
+            if (finished) {
+              return;
+            }
+
+
+            console.log(
+              "Lookup request timeout. Retrying..."
+            );
+
+
+            delete window[callbackName];
+
+
+            cleanupCurrentRequest();
+
+
+            scheduleRetry();
+
+          },
+          REQUEST_TIMEOUT
+        );
+
+
+      // ==================================================
+      // เริ่ม request
+      // ==================================================
 
       document.body.appendChild(
         script
@@ -460,29 +700,50 @@
     }
 
 
-    requestLookup();
+    // ==================================================
+    // Timeout รวมทั้งหมด
+    // ==================================================
+
+    setTimeout(
+      function() {
+
+        if (finished) {
+          return;
+        }
 
 
-    timeoutTimer =
-      setTimeout(
-        function() {
-
-          if (finished) return;
+        finished = true;
 
 
-          finished = true;
-
-          cleanup();
+        cleanup();
 
 
-          showError(
-            "เปิด link ไม่สำเร็จค่ะ",
-            "ระบบใช้เวลานานเกินไป กรุณาลองเปิดใหม่อีกครั้งนะคะ"
-          );
+        showError(
+          "เปิด link ไม่สำเร็จค่ะ",
+          "ระบบใช้เวลานานเกินไป กรุณาลองเปิดใหม่อีกครั้งนะคะ"
+        );
 
-        },
-        45000
+      },
+      TOTAL_TIMEOUT
+    );
+
+
+    // ==================================================
+    // เริ่มทำงาน
+    // ==================================================
+
+    if (!code) {
+
+      showError(
+        "ไม่พบ link นี้ค่ะ",
+        "กรุณาตรวจสอบ Short URL อีกครั้งนะคะ"
       );
+
+    } else {
+
+      requestLookup();
+
+    }
 
   </script>
 
