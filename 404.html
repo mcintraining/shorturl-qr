@@ -12,20 +12,205 @@
 
   <title>กำลังเปิดลิงก์...</title>
 
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #faf9fd;
+      font-family:
+        Arial,
+        "Noto Sans Thai",
+        sans-serif;
+      color: #4b4560;
+    }
+
+    .loading-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+    }
+
+    .loading-card {
+      width: 100%;
+      max-width: 520px;
+      padding: 38px 25px 34px;
+      background: #ffffff;
+      border: 1px solid #e5e0ef;
+      border-radius: 22px;
+      text-align: center;
+      box-shadow:
+        0 8px 25px rgba(80, 65, 110, 0.08);
+    }
+
+    .loading-icon {
+      font-size: 42px;
+      line-height: 1;
+      margin-bottom: 18px;
+      animation: floatIcon 1.8s ease-in-out infinite;
+    }
+
+    @keyframes floatIcon {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-7px);
+      }
+
+    }
+
+    .loading-title {
+      margin: 0 0 10px;
+      color: #4b3f72;
+      font-size: 21px;
+      font-weight: 700;
+    }
+
+    .loading-message {
+      min-height: 24px;
+      margin: 0;
+      color: #777;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .dots {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 7px;
+      margin: 20px 0 13px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #8c7ab8;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+
+    .dot:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .dot:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .dot:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.45;
+      }
+
+      30% {
+        transform: translateY(-8px);
+        opacity: 1;
+      }
+
+    }
+
+    .elapsed {
+      margin-top: 8px;
+      color: #aaa;
+      font-size: 12px;
+    }
+
+    .error-card {
+      width: 100%;
+      max-width: 520px;
+      padding: 35px 25px;
+      background: #ffffff;
+      border: 1px solid #f0b5b5;
+      border-radius: 22px;
+      text-align: center;
+      box-shadow:
+        0 8px 25px rgba(80, 65, 110, 0.08);
+    }
+
+    .error-icon {
+      font-size: 38px;
+      margin-bottom: 12px;
+    }
+
+    .error-title {
+      margin: 0 0 10px;
+      color: #a52828;
+      font-size: 20px;
+    }
+
+    .error-message {
+      margin: 0;
+      color: #777;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+  </style>
+
 </head>
 
 
 <body>
 
-  <p
-    style="
-      text-align:center;
-      margin-top:60px;
-      font-family:Arial,sans-serif;
-    "
-  >
-    กำลังเปิดลิงก์...
-  </p>
+  <div class="loading-container">
+
+    <div
+      class="loading-card"
+      id="loadingCard"
+    >
+
+      <div class="loading-icon">
+        🐾
+      </div>
+
+      <h1 class="loading-title">
+        กำลังเปิดลิงก์ให้ค่ะ…
+      </h1>
+
+      <p
+        class="loading-message"
+        id="loadingMessage"
+      >
+        กรุณารอสักครู่นะคะ
+      </p>
+
+      <div class="dots">
+
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+
+      </div>
+
+      <div
+        class="elapsed"
+        id="elapsed"
+      >
+        กำลังดำเนินการ…
+      </div>
+
+    </div>
+
+  </div>
 
 
   <script>
@@ -39,144 +224,436 @@
 
 
     // =====================================
-    // ดึง Short Code จาก URL
-    // เช่น
-    // /shorturl-qr/EWRuot
-    //
-    // จะได้
-    // EWRuot
+    // ตั้งค่าเวลารอ
     // =====================================
 
-    const path = window.location.pathname;
+    const RETRY_AFTER_MS = 12000;
+
+    const MAX_WAIT_MS = 45000;
+
+
+    // =====================================
+    // ดึง Short Code จาก URL
+    // =====================================
+
+    const path =
+      window.location.pathname;
 
     const code =
-      path.split("/").filter(Boolean).pop();
+      path
+        .split("/")
+        .filter(Boolean)
+        .pop();
 
 
-    console.log("Short code:", code);
+    console.log(
+      "Short code:",
+      code
+    );
 
 
     // =====================================
-    // สร้างชื่อ callback
+    // สถานะการทำงาน
     // =====================================
 
-    const callbackName =
-      "lookupCallback_" + Date.now();
+    const startTime =
+      Date.now();
+
+    let finished = false;
+
+    let retryTimer = null;
+
+    let timeoutTimer = null;
+
+    let elapsedTimer = null;
+
+    let currentScript = null;
+
+
+    // =====================================
+    // แสดงเวลาที่ใช้
+    // =====================================
+
+    function updateElapsed() {
+
+      if (finished) {
+        return;
+      }
+
+      const seconds =
+        Math.floor(
+          (Date.now() - startTime) / 1000
+        );
+
+      document.getElementById(
+        "elapsed"
+      ).textContent =
+        "กำลังเปิดลิงก์… " +
+        seconds +
+        " วินาที";
+
+    }
+
+
+    elapsedTimer =
+      setInterval(
+        updateElapsed,
+        1000
+      );
+
+
+    // =====================================
+    // เปลี่ยนข้อความตามเวลาที่รอ
+    // =====================================
+
+    function updateLoadingMessage() {
+
+      if (finished) {
+        return;
+      }
+
+      const elapsed =
+        Date.now() - startTime;
+
+      const message =
+        document.getElementById(
+          "loadingMessage"
+        );
+
+
+      if (elapsed < 12000) {
+
+        message.textContent =
+          "กรุณารอสักครู่นะคะ";
+
+      }
+      else if (elapsed < 24000) {
+
+        message.textContent =
+          "กำลังเตรียมหน้าเว็บให้ค่ะ…";
+
+      }
+      else if (elapsed < 36000) {
+
+        message.textContent =
+          "ยังดำเนินการอยู่ค่ะ อีกนิดเดียวนะคะ";
+
+      }
+      else {
+
+        message.textContent =
+          "ระบบใช้เวลานานกว่าปกตินิดหน่อยค่ะ";
+
+      }
+
+    }
+
+
+    setInterval(
+      updateLoadingMessage,
+      1000
+    );
+
+
+    // =====================================
+    // จบการทำงานและ cleanup
+    // =====================================
+
+    function finish() {
+
+      finished = true;
+
+
+      if (retryTimer) {
+
+        clearTimeout(
+          retryTimer
+        );
+
+        retryTimer = null;
+
+      }
+
+
+      if (timeoutTimer) {
+
+        clearTimeout(
+          timeoutTimer
+        );
+
+        timeoutTimer = null;
+
+      }
+
+
+      if (elapsedTimer) {
+
+        clearInterval(
+          elapsedTimer
+        );
+
+        elapsedTimer = null;
+
+      }
+
+
+      if (currentScript) {
+
+        currentScript.remove();
+
+        currentScript = null;
+
+      }
+
+    }
+
+
+    // =====================================
+    // แสดง Error
+    // =====================================
+
+    function showError(
+      title,
+      message
+    ) {
+
+      finish();
+
+
+      document.body.innerHTML = `
+
+        <div class="loading-container">
+
+          <div class="error-card">
+
+            <div class="error-icon">
+              😿
+            </div>
+
+            <h2 class="error-title">
+              ${title}
+            </h2>
+
+            <p class="error-message">
+              ${message}
+            </p>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
 
 
     // =====================================
     // รับผลจาก Apps Script
     // =====================================
 
-    window[callbackName] = function(data) {
-
-      console.log("Lookup result:", data);
-
-
-      // ลบ callback
-      delete window[callbackName];
+    const callbackName =
+      "lookupCallback_" +
+      Date.now();
 
 
-      // ลบ script ที่สร้างขึ้น
-      const script =
-        document.getElementById(callbackName);
+    window[callbackName] =
+      function(data) {
 
-      if (script) {
-        script.remove();
-      }
-
-
-      // =====================================
-      // ถ้าเจอ Short URL
-      // =====================================
-
-      if (data.success && data.longUrl) {
-
-        window.location.replace(
-          data.longUrl
+        console.log(
+          "Lookup result:",
+          data
         );
 
-        return;
-      }
+
+        if (finished) {
+          return;
+        }
 
 
-      // =====================================
-      // ถ้าไม่เจอ
-      // =====================================
+        // =====================================
+        // ถ้าเจอ Short URL
+        // =====================================
 
-      document.body.innerHTML = `
+        if (
+          data &&
+          data.success &&
+          data.longUrl
+        ) {
 
-        <div
-          style="
-            text-align:center;
-            margin-top:60px;
-            font-family:Arial,sans-serif;
-          "
-        >
+          finish();
 
-          <h2>ไม่พบลิงก์นี้ค่ะ</h2>
 
-          <p>
-            Short URL นี้อาจไม่มีอยู่
-            หรือถูกลบไปแล้ว
-          </p>
+          window.location.replace(
+            data.longUrl
+          );
 
-        </div>
+          return;
 
-      `;
+        }
 
-    };
+
+        // =====================================
+        // ถ้าไม่พบลิงก์
+        // =====================================
+
+        if (
+          data &&
+          data.success === false
+        ) {
+
+          showError(
+            "ไม่พบลิงก์นี้ค่ะ",
+            "Short URL นี้อาจไม่มีอยู่ หรือถูกลบไปแล้ว"
+          );
+
+          return;
+
+        }
+
+
+        // =====================================
+        // กรณี response ผิดรูปแบบ
+        // =====================================
+
+        console.warn(
+          "Unexpected response:",
+          data
+        );
+
+      };
 
 
     // =====================================
     // เรียก Apps Script ด้วย JSONP
     // =====================================
 
-    const script =
-      document.createElement("script");
+    function sendRequest() {
+
+      if (finished) {
+        return;
+      }
 
 
-    script.id = callbackName;
+      const script =
+        document.createElement(
+          "script"
+        );
 
 
-    script.src =
-      API_URL +
-      "?code=" +
-      encodeURIComponent(code) +
-      "&callback=" +
-      encodeURIComponent(callbackName);
+      currentScript =
+        script;
+
+
+      script.id =
+        callbackName;
+
+
+      script.src =
+        API_URL +
+        "?code=" +
+        encodeURIComponent(code) +
+        "&callback=" +
+        encodeURIComponent(callbackName);
+
+
+      // =====================================
+      // ถ้าโหลด request ไม่สำเร็จ
+      // อย่าเพิ่งแสดง error
+      // =====================================
+
+      script.onerror =
+        function() {
+
+          console.warn(
+            "Lookup request failed. Will retry."
+          );
+
+
+          if (finished) {
+            return;
+          }
+
+
+          if (!retryTimer) {
+
+            retryTimer =
+              setTimeout(
+                function() {
+
+                  retryTimer = null;
+
+                  sendRequest();
+
+                },
+                1000
+              );
+
+          }
+
+        };
+
+
+      document.body.appendChild(
+        script
+      );
+
+    }
 
 
     // =====================================
-    // กรณีโหลด API ไม่สำเร็จ
+    // Request แรก
     // =====================================
 
-    script.onerror = function() {
-
-      document.body.innerHTML = `
-
-        <div
-          style="
-            text-align:center;
-            margin-top:60px;
-            font-family:Arial,sans-serif;
-          "
-        >
-
-          <h2>ไม่สามารถเปิดลิงก์ได้ค่ะ</h2>
-
-          <p>
-            กรุณาลองใหม่อีกครั้ง
-          </p>
-
-        </div>
-
-      `;
-
-    };
+    sendRequest();
 
 
-    document.body.appendChild(script);
+    // =====================================
+    // ถ้ายังไม่ได้ผลหลัง 12 วินาที
+    // ลอง request อีกครั้ง
+    // =====================================
+
+    retryTimer =
+      setTimeout(
+        function() {
+
+          retryTimer = null;
+
+          if (!finished) {
+
+            console.log(
+              "Retrying lookup request..."
+            );
+
+            sendRequest();
+
+          }
+
+        },
+        RETRY_AFTER_MS
+      );
+
+
+    // =====================================
+    // ถ้าเกิน 45 วินาที
+    // =====================================
+
+    timeoutTimer =
+      setTimeout(
+        function() {
+
+          if (finished) {
+            return;
+          }
+
+
+          showError(
+            "เปิดลิงก์ใช้เวลานานกว่าปกติค่ะ",
+            "กรุณาลองเปิด Short URL นี้อีกครั้งในอีกสักครู่นะคะ"
+          );
+
+        },
+        MAX_WAIT_MS
+      );
 
   </script>
 
