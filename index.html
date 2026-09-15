@@ -156,12 +156,84 @@
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
     }
 
     @keyframes spin {
       to {
         transform: rotate(360deg);
       }
+    }
+
+    /*
+     * Loading panel
+     */
+
+    .loading-card {
+      margin-top: 22px;
+      padding: 24px 18px;
+      border-radius: 18px;
+      background: #faf9fd;
+      border: 1px solid #e5e0ef;
+      text-align: center;
+    }
+
+    .loading-animation {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 7px;
+      height: 34px;
+      margin-bottom: 12px;
+    }
+
+    .loading-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #8067b7;
+      animation: loadingBounce 1.2s infinite ease-in-out;
+    }
+
+    .loading-dot:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    .loading-dot:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes loadingBounce {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.45;
+      }
+
+      30% {
+        transform: translateY(-9px);
+        opacity: 1;
+      }
+    }
+
+    .loading-title {
+      margin: 0;
+      color: #4b3f72;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .loading-detail {
+      margin: 7px 0 0;
+      color: #888;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .loading-time {
+      margin-top: 9px;
+      color: #aaa;
+      font-size: 12px;
     }
 
     #result {
@@ -341,6 +413,10 @@
       #shortUrl {
         font-size: 16px;
       }
+
+      .loading-card {
+        padding: 22px 15px;
+      }
     }
   </style>
 
@@ -442,6 +518,22 @@
 
     const SHORT_URL_BASE =
       "https://mcintraining.github.io/shorturl-qr/";
+
+
+    /*
+     * Timing
+     *
+     * หลังส่ง request แล้ว ถ้า 12 วินาทียังไม่ได้ response
+     * จะส่ง request เดิมอีกครั้งด้วย requestId เดิม
+     *
+     * เพราะ Apps Script มีระบบ requestId/cache อยู่แล้ว
+     * จึงช่วยรองรับกรณี backend สร้างข้อมูลสำเร็จ
+     * แต่ callback แรกกลับมาไม่ทัน
+     */
+
+    const RETRY_AFTER_MS = 12000;
+
+    const MAX_WAIT_MS = 45000;
 
 
     function getElement(id) {
@@ -584,6 +676,108 @@
     }
 
 
+    function showLoadingPanel() {
+
+      const result =
+        getElement("result");
+
+      result.innerHTML = `
+
+        <div class="loading-card">
+
+          <div class="loading-animation">
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+            <span class="loading-dot"></span>
+          </div>
+
+          <p
+            id="loadingTitle"
+            class="loading-title"
+          >
+            กำลังสร้าง Short URL ให้ค่ะ...
+          </p>
+
+          <p
+            id="loadingDetail"
+            class="loading-detail"
+          >
+            กำลังติดต่อระบบอยู่ค่ะ กรุณารอสักครู่นะคะ ✨
+          </p>
+
+          <div
+            id="loadingTime"
+            class="loading-time"
+          >
+            ใช้เวลาไป 0 วินาที
+          </div>
+
+        </div>
+
+      `;
+    }
+
+
+    function updateLoadingPanel(elapsedSeconds) {
+
+      const loadingTitle =
+        getElement("loadingTitle");
+
+      const loadingDetail =
+        getElement("loadingDetail");
+
+      const loadingTime =
+        getElement("loadingTime");
+
+
+      if (!loadingTitle || !loadingDetail || !loadingTime) {
+        return;
+      }
+
+
+      loadingTime.textContent =
+        "ใช้เวลาไป " +
+        elapsedSeconds +
+        " วินาที";
+
+
+      if (elapsedSeconds < 12) {
+
+        loadingTitle.textContent =
+          "กำลังสร้าง Short URL ให้ค่ะ...";
+
+        loadingDetail.textContent =
+          "กำลังติดต่อระบบอยู่ค่ะ กรุณารอสักครู่นะคะ ✨";
+
+      } else if (elapsedSeconds < 24) {
+
+        loadingTitle.textContent =
+          "ยังทำงานอยู่นะคะ 💜";
+
+        loadingDetail.textContent =
+          "ระบบตอบกลับช้ากว่าปกตินิดหน่อยค่ะ กำลังตรวจสอบผลให้อีกครั้ง...";
+
+      } else if (elapsedSeconds < 36) {
+
+        loadingTitle.textContent =
+          "เกือบเรียบร้อยแล้วค่ะ ✨";
+
+        loadingDetail.textContent =
+          "กำลังรอการยืนยันจากระบบอยู่ค่ะ ไม่ต้องกดสร้างซ้ำค่ะ";
+
+      } else {
+
+        loadingTitle.textContent =
+          "กำลังตรวจสอบผลการสร้างลิงก์ค่ะ 🔎";
+
+        loadingDetail.textContent =
+          "ใช้เวลานานกว่าปกติเล็กน้อย แต่ยังไม่ถือว่าล้มเหลวค่ะ";
+
+      }
+
+    }
+
+
     function createShortUrl() {
 
       const longUrlInput =
@@ -594,9 +788,6 @@
 
       const aliasInput =
         getElement("alias");
-
-      const result =
-        getElement("result");
 
 
       if (!validateForm()) {
@@ -628,8 +819,7 @@
 
       setLoading(true);
 
-      result.innerHTML =
-        '<div class="message info">กำลังติดต่อระบบเพื่อสร้างลิงก์ค่ะ...</div>';
+      showLoadingPanel();
 
 
       const callbackName =
@@ -637,252 +827,485 @@
 
 
       const requestId =
-        "REQ-" + Date.now();
+        "REQ-" +
+        Date.now() +
+        "-" +
+        Math.random()
+          .toString(36)
+          .substring(2, 8);
 
 
       let completed = false;
+
+      let startTime =
+        Date.now();
+
+      let retryTimer = null;
+
+      let maxWaitTimer = null;
+
+      let loadingTimer = null;
+
+
+      function cleanup() {
+
+        if (retryTimer) {
+          clearTimeout(retryTimer);
+          retryTimer = null;
+        }
+
+        if (maxWaitTimer) {
+          clearTimeout(maxWaitTimer);
+          maxWaitTimer = null;
+        }
+
+        if (loadingTimer) {
+          clearInterval(loadingTimer);
+          loadingTimer = null;
+        }
+
+        const scripts =
+          document.querySelectorAll(
+            'script[data-request-id="' +
+            requestId +
+            '"]'
+          );
+
+        scripts.forEach(function(script) {
+          script.remove();
+        });
+
+      }
+
+
+      function finish() {
+
+        if (completed) {
+          return;
+        }
+
+        completed = true;
+
+        cleanup();
+
+        delete window[callbackName];
+
+        setLoading(false);
+
+      }
+
+
+      function showFinalError(message) {
+
+        finish();
+
+        const result =
+          getElement("result");
+
+        result.innerHTML =
+          '<div class="message error">' +
+          '❌ ' +
+          message +
+          '</div>';
+
+      }
+
+
+      function handleResult(data) {
+
+        if (completed) {
+          return;
+        }
+
+
+        console.log(
+          "Create result:",
+          data
+        );
+
+
+        if (
+          data &&
+          data.success &&
+          data.code
+        ) {
+
+          finish();
+
+
+          const shortCode =
+            data.code;
+
+
+          const shortUrl =
+            SHORT_URL_BASE +
+            shortCode;
+
+
+          const qrUrl =
+            "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" +
+            encodeURIComponent(shortUrl);
+
+
+          const result =
+            getElement("result");
+
+
+          result.innerHTML = `
+
+            <div class="success-card">
+
+              <h2 class="success-title">
+                🎉 สร้าง Short URL สำเร็จค่ะ
+              </h2>
+
+              <p class="short-label">
+                Short URL
+              </p>
+
+              <a
+                id="shortUrl"
+                href="${shortUrl}"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                ${shortUrl}
+              </a>
+
+              <button
+                type="button"
+                id="copyButton"
+                class="secondary-button"
+                onclick="copyShortUrl('${shortUrl}')"
+              >
+                📋 Copy Short URL
+              </button>
+
+              <div
+                id="copyFeedback"
+                class="copy-feedback"
+                aria-live="polite"
+              ></div>
+
+              <div class="qr-wrapper">
+
+                <p class="short-label">
+                  QR Code
+                </p>
+
+                <img
+                  id="qrCode"
+                  src="${qrUrl}"
+                  alt="QR Code สำหรับ ${shortUrl}"
+                >
+
+                <p class="scan-text">
+                  สแกน QR Code เพื่อเปิด Short URL
+                </p>
+
+                <button
+                  type="button"
+                  id="downloadButton"
+                  class="secondary-button download-button"
+                  onclick="downloadQR('${qrUrl}', '${shortCode}')"
+                >
+                  ⬇️ Download QR Code
+                </button>
+
+              </div>
+
+            </div>
+
+          `;
+
+          return;
+        }
+
+
+        const errorMessage =
+          data &&
+          data.error
+            ? data.error
+            : "สร้าง Short URL ไม่สำเร็จค่ะ";
+
+
+        const isDuplicate =
+          errorMessage.toLowerCase().includes("already") ||
+          errorMessage.includes("ซ้ำ") ||
+          errorMessage.includes("ถูกใช้งานแล้ว");
+
+
+        finish();
+
+
+        const result =
+          getElement("result");
+
+
+        if (isDuplicate) {
+
+          result.innerHTML =
+            '<div class="message error">' +
+            '❌ Custom Link นี้ถูกใช้งานแล้ว กรุณาเลือกชื่ออื่นค่ะ' +
+            '</div>';
+
+
+          setInputError(
+            aliasInput,
+            true
+          );
+
+
+          aliasInput.focus();
+
+        } else {
+
+          result.innerHTML =
+            '<div class="message error">' +
+            '❌ ' +
+            errorMessage +
+            '</div>';
+
+        }
+
+      }
 
 
       window[callbackName] =
         function(data) {
 
-          if (completed) {
-            return;
-          }
-
-
-          completed = true;
-
-
-          console.log(
-            "Create result:",
-            data
-          );
-
-
-          delete window[callbackName];
-
-
-          const script =
-            getElement(callbackName);
-
-
-          if (script) {
-            script.remove();
-          }
-
-
-          setLoading(false);
-
-
-          if (data.success && data.code) {
-
-            const shortCode =
-              data.code;
-
-
-            const shortUrl =
-              SHORT_URL_BASE +
-              shortCode;
-
-
-            const qrUrl =
-              "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" +
-              encodeURIComponent(shortUrl);
-
-
-            result.innerHTML = `
-
-              <div class="success-card">
-
-                <h2 class="success-title">
-                  🎉 สร้าง Short URL สำเร็จค่ะ
-                </h2>
-
-                <p class="short-label">
-                  Short URL
-                </p>
-
-                <a
-                  id="shortUrl"
-                  href="${shortUrl}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  ${shortUrl}
-                </a>
-
-                <button
-                  type="button"
-                  id="copyButton"
-                  class="secondary-button"
-                  onclick="copyShortUrl('${shortUrl}')"
-                >
-                  📋 Copy Short URL
-                </button>
-
-                <div
-                  id="copyFeedback"
-                  class="copy-feedback"
-                  aria-live="polite"
-                ></div>
-
-                <div class="qr-wrapper">
-
-                  <p class="short-label">
-                    QR Code
-                  </p>
-
-                  <img
-                    id="qrCode"
-                    src="${qrUrl}"
-                    alt="QR Code สำหรับ ${shortUrl}"
-                  >
-
-                  <p class="scan-text">
-                    สแกน QR Code เพื่อเปิด Short URL
-                  </p>
-
-                  <button
-                    type="button"
-                    id="downloadButton"
-                    class="secondary-button download-button"
-                    onclick="downloadQR('${qrUrl}', '${shortCode}')"
-                  >
-                    ⬇️ Download QR Code
-                  </button>
-
-                </div>
-
-              </div>
-
-            `;
-
-          } else {
-
-            const errorMessage =
-              data.error ||
-              "สร้าง Short URL ไม่สำเร็จค่ะ";
-
-
-            const isDuplicate =
-              errorMessage.toLowerCase().includes("already") ||
-              errorMessage.includes("ซ้ำ") ||
-              errorMessage.includes("ถูกใช้งานแล้ว");
-
-
-            if (isDuplicate) {
-
-              result.innerHTML =
-                '<div class="message error">' +
-                '❌ Custom Link นี้ถูกใช้งานแล้ว กรุณาเลือกชื่ออื่นค่ะ' +
-                '</div>';
-
-
-              setInputError(
-                aliasInput,
-                true
-              );
-
-
-              aliasInput.focus();
-
-            } else {
-
-              result.innerHTML =
-                '<div class="message error">' +
-                '❌ ' +
-                errorMessage +
-                '</div>';
-            }
-          }
+          handleResult(data);
 
         };
 
 
-      const script =
-        document.createElement("script");
+      function sendRequest(isRetry) {
+
+        if (completed) {
+          return;
+        }
 
 
-      script.id =
-        callbackName;
+        if (isRetry) {
+
+          console.log(
+            "Retrying request:",
+            requestId
+          );
+
+        }
 
 
-      /*
-       * สำคัญ:
-       * ถ้า Long URL มีภาษาไทยอยู่ในรูป percent-encoded
-       * เช่น %e0%b8%97...
-       *
-       * decodeURI() จะเปลี่ยนเฉพาะส่วนที่เป็น encoded
-       * ของ URL ให้กลับเป็น Unicode โดยยังคงโครงสร้าง URL
-       * และ reserved characters เอาไว้
-       *
-       * จากนั้น encodeURIComponent() จะ encode URL
-       * สำหรับส่งเป็น query parameter อีกครั้ง
-       *
-       * ช่วยหลีกเลี่ยงการส่ง %25e0... จากการ encode
-       * ซ้อนกับ percent-encoded Thai URL เดิม
-       */
-      let requestUrl =
-        finalUrl;
+        const script =
+          document.createElement("script");
 
-      try {
 
-        requestUrl =
-          decodeURI(finalUrl);
+        script.id =
+          callbackName +
+          "_" +
+          Date.now();
 
-      } catch (error) {
 
-        console.warn(
-          "Could not normalize encoded URL:",
-          error
+        script.dataset.requestId =
+          requestId;
+
+
+        /*
+         * สำคัญ:
+         *
+         * ถ้า Long URL มีภาษาไทยอยู่ในรูป percent-encoded
+         * เช่น %e0%b8%97...
+         *
+         * decodeURI() จะเปลี่ยนเฉพาะส่วนที่เป็น encoded
+         * ของ URL ให้กลับเป็น Unicode
+         * โดยยังคงโครงสร้าง URL และ reserved characters เอาไว้
+         *
+         * จากนั้น encodeURIComponent() จะ encode URL
+         * สำหรับส่งเป็น query parameter อีกครั้ง
+         */
+
+        let requestUrl =
+          finalUrl;
+
+
+        try {
+
+          requestUrl =
+            decodeURI(finalUrl);
+
+        } catch (error) {
+
+          console.warn(
+            "Could not normalize encoded URL:",
+            error
+          );
+
+          requestUrl =
+            finalUrl;
+        }
+
+
+        script.src =
+          API_URL +
+          "?longUrl=" +
+          encodeURIComponent(requestUrl) +
+          "&title=" +
+          encodeURIComponent(title) +
+          "&alias=" +
+          encodeURIComponent(alias) +
+          "&requestId=" +
+          encodeURIComponent(requestId) +
+          "&callback=" +
+          encodeURIComponent(callbackName);
+
+
+        script.onerror =
+          function() {
+
+            console.warn(
+              "JSONP request error. Waiting/retrying...",
+              requestId
+            );
+
+
+            /*
+             * ไม่ถือว่า failed ทันที
+             *
+             * เพราะ backend อาจทำงานเสร็จและบันทึกลง Sheet แล้ว
+             * แต่ browser อาจไม่ได้รับ callback
+             */
+
+            if (!completed) {
+
+              if (
+                Date.now() - startTime <
+                MAX_WAIT_MS
+              ) {
+
+                retryTimer =
+                  setTimeout(
+                    function() {
+                      sendRequest(true);
+                    },
+                    1000
+                  );
+
+              }
+
+            }
+
+          };
+
+
+        document.body.appendChild(script);
+
+
+        /*
+         * ลบ script เก่าออกหลังจากให้เวลามันตอบกลับ
+         * แต่ไม่ลบ callback
+         */
+
+        setTimeout(
+          function() {
+
+            if (script.parentNode) {
+              script.remove();
+            }
+
+          },
+          15000
         );
 
-        requestUrl =
-          finalUrl;
       }
 
 
-      script.src =
-        API_URL +
-        "?longUrl=" +
-        encodeURIComponent(requestUrl) +
-        "&title=" +
-        encodeURIComponent(title) +
-        "&alias=" +
-        encodeURIComponent(alias) +
-        "&requestId=" +
-        encodeURIComponent(requestId) +
-        "&callback=" +
-        encodeURIComponent(callbackName);
+      /*
+       * เริ่ม request แรก
+       */
+
+      sendRequest(false);
 
 
-      script.onerror =
-        function() {
+      /*
+       * แสดงเวลาที่กำลังรอ
+       */
 
-          if (completed) {
-            return;
-          }
+      loadingTimer =
+        setInterval(
+          function() {
 
-
-          completed = true;
-
-
-          delete window[callbackName];
-
-
-          setLoading(false);
+            if (completed) {
+              return;
+            }
 
 
-          result.innerHTML =
-            '<div class="message error">' +
-            '❌ ไม่สามารถเชื่อมต่อระบบได้ค่ะ กรุณาลองใหม่' +
-            '</div>';
+            const elapsedSeconds =
+              Math.floor(
+                (Date.now() - startTime) /
+                1000
+              );
 
-        };
+
+            updateLoadingPanel(
+              elapsedSeconds
+            );
+
+          },
+          1000
+        );
 
 
-      document.body.appendChild(script);
+      /*
+       * ถ้า 12 วินาทีแล้วยังไม่มี callback
+       * ให้ยิง request เดิมอีกครั้ง
+       *
+       * ใช้ requestId เดิม
+       * เพื่อให้ Apps Script รู้ว่าเป็น request เดิม
+       */
+
+      retryTimer =
+        setTimeout(
+          function() {
+
+            if (completed) {
+              return;
+            }
+
+
+            updateLoadingPanel(12);
+
+            sendRequest(true);
+
+          },
+          RETRY_AFTER_MS
+        );
+
+
+      /*
+       * Hard timeout
+       *
+       * เราจะไม่ปล่อยให้ spinner หมุนไปเรื่อย ๆ
+       * แต่ให้เวลาถึง 45 วินาทีก่อนแจ้งผู้ใช้
+       */
+
+      maxWaitTimer =
+        setTimeout(
+          function() {
+
+            if (completed) {
+              return;
+            }
+
+
+            showFinalError(
+              "ระบบใช้เวลาประมวลผลนานเกินปกติค่ะ " +
+              "กรุณารอสักครู่แล้วตรวจสอบ Short Link อีกครั้ง " +
+              "ก่อนกดสร้างใหม่ เพื่อป้องกันการสร้างลิงก์ซ้ำค่ะ"
+            );
+
+          },
+          MAX_WAIT_MS
+        );
 
     }
 
@@ -908,6 +1331,7 @@
             "ไม่สามารถคัดลอกอัตโนมัติได้ค่ะ กรุณาคัดลอกลิงก์ด้วยตัวเอง";
 
         });
+
     }
 
 
@@ -960,7 +1384,9 @@
 
 
           link.download =
-            "QR-" + shortCode + ".png";
+            "QR-" +
+            shortCode +
+            ".png";
 
 
           document.body.appendChild(link);
