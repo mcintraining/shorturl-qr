@@ -4,69 +4,137 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>กำลังเปิด link...</title>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      background: #fff;
+      min-height: 100vh;
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      padding: 20px;
+
       font-family: Arial, sans-serif;
+
+      background:
+        linear-gradient(
+          135deg,
+          #fff7fb 0%,
+          #f8f5ff 50%,
+          #f2fbff 100%
+        );
+
       color: #555;
     }
 
-    .loading-box {
+    .loading-card {
+      width: 100%;
+      max-width: 390px;
+
+      padding: 42px 28px 34px;
+
       text-align: center;
-      margin-top: 80px;
-      padding: 20px;
+
+      background: rgba(255, 255, 255, 0.94);
+
+      border: 2px solid #eee4f5;
+
+      border-radius: 28px;
+
+      box-shadow:
+        0 8px 30px rgba(150, 130, 170, 0.10),
+        0 2px 8px rgba(150, 130, 170, 0.06);
+
+      animation: cardAppear 0.5s ease-out;
     }
 
     .cute-icon {
-      font-size: 42px;
-      animation: float 1.8s ease-in-out infinite;
+      font-size: 48px;
+
       display: inline-block;
+
+      animation: float 1.8s ease-in-out infinite;
     }
 
     .loading-title {
-      margin-top: 14px;
-      font-size: 20px;
-      font-weight: 600;
-      color: #555;
+      margin-top: 16px;
+
+      font-size: 21px;
+      font-weight: 700;
+
+      color: #685878;
     }
 
     .loading-message {
-      margin-top: 10px;
-      font-size: 15px;
-      color: #888;
+      margin-top: 12px;
+
       min-height: 24px;
+
+      font-size: 15px;
+      line-height: 1.6;
+
+      color: #8b7b94;
+
+      transition: opacity 0.25s ease;
     }
 
     .dots {
-      margin-top: 14px;
+      margin-top: 18px;
+
       display: flex;
       justify-content: center;
-      gap: 6px;
+      align-items: center;
+
+      gap: 7px;
     }
 
     .dots span {
-      width: 8px;
-      height: 8px;
+      width: 9px;
+      height: 9px;
+
       border-radius: 50%;
-      background: #aaa;
+
+      background: #c7a9d8;
+
       animation: bounce 1.2s infinite ease-in-out;
     }
 
     .dots span:nth-child(2) {
+      background: #d8b8d9;
       animation-delay: 0.15s;
     }
 
     .dots span:nth-child(3) {
+      background: #b8cce3;
       animation-delay: 0.3s;
     }
 
     .elapsed {
-      margin-top: 12px;
+      margin-top: 14px;
+
       font-size: 12px;
-      color: #aaa;
+
+      color: #b0a5b5;
+    }
+
+    .little-note {
+      margin-top: 22px;
+
+      padding-top: 15px;
+
+      border-top: 1px dashed #eadfea;
+
+      font-size: 12px;
+
+      color: #aaa0ac;
     }
 
     @keyframes bounce {
@@ -85,7 +153,34 @@
       }
 
       50% {
-        transform: translateY(-5px);
+        transform: translateY(-6px);
+      }
+    }
+
+    @keyframes cardAppear {
+      from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .loading-card {
+        padding: 36px 22px 30px;
+        border-radius: 24px;
+      }
+
+      .loading-title {
+        font-size: 19px;
+      }
+
+      .loading-message {
+        font-size: 14px;
       }
     }
   </style>
@@ -93,7 +188,8 @@
 
 <body>
 
-  <div class="loading-box" id="loadingBox">
+  <div class="loading-card" id="loadingBox">
+
     <div class="cute-icon">🐾</div>
 
     <div class="loading-title">
@@ -101,7 +197,7 @@
     </div>
 
     <div class="loading-message" id="loadingMessage">
-      กรุณารอสักครู่นะคะ
+      กำลังเปิด link ให้ค่ะ ✧｡٩(ˊᗜˋ )و✧*｡
     </div>
 
     <div class="dots">
@@ -113,18 +209,28 @@
     <div class="elapsed" id="elapsed">
       0 วินาที
     </div>
+
+    <div class="little-note">
+      ไม่ได้ค้างนะคะ กำลังทำงานอยู่ค่ะ ♡
+    </div>
+
   </div>
 
+
   <script>
+
     const API_URL =
       "https://script.google.com/macros/s/AKfycbyX4QKp8avHVhcmALKy6VrTcopjpLX4c8PbXqX0pNis6RMDLy7eSmNka6NdEiylzopWfw/exec";
+
 
     const path = window.location.pathname;
 
     const code =
       path.split("/").filter(Boolean).pop();
 
+
     console.log("Short code:", code);
+
 
     const loadingMessage =
       document.getElementById("loadingMessage");
@@ -132,118 +238,184 @@
     const elapsedElement =
       document.getElementById("elapsed");
 
+
     const startTime = Date.now();
 
+
     let retryTimer = null;
+
     let timeoutTimer = null;
+
     let finished = false;
 
+
     function updateLoadingMessage() {
+
       if (finished) return;
 
+
       const seconds =
-        Math.floor((Date.now() - startTime) / 1000);
+        Math.floor(
+          (Date.now() - startTime) / 1000
+        );
+
 
       elapsedElement.textContent =
         seconds + " วินาที";
 
+
       if (seconds < 12) {
+
         loadingMessage.textContent =
           "กำลังเปิด link ให้ค่ะ ✧｡٩(ˊᗜˋ )و✧*｡";
+
       } else if (seconds < 24) {
+
         loadingMessage.textContent =
           "กำลังเตรียมหน้าเว็บให้ค่ะ ✧｡٩(ˊᗜˋ )و✧*｡";
+
       } else if (seconds < 36) {
+
         loadingMessage.textContent =
           "ยังดำเนินการอยู่ค่ะ อีกนิดเดียวนะคะ ✧｡٩(ˊᗜˋ )و✧*｡";
+
       } else {
+
         loadingMessage.textContent =
           "ระบบใช้เวลานานกว่าปกตินิดหน่อยค่ะ ✧｡٩(ˊᗜˋ )و✧*｡";
+
       }
+
     }
 
-    setInterval(updateLoadingMessage, 1000);
+
+    setInterval(
+      updateLoadingMessage,
+      1000
+    );
+
     updateLoadingMessage();
 
+
     function showError(title, message) {
+
       finished = true;
 
+
       document.body.innerHTML = `
-        <div style="
-          text-align:center;
-          margin-top:80px;
-          padding:20px;
-          font-family:Arial,sans-serif;
-          color:#555;
-        ">
-          <div style="
-            font-size:42px;
-            margin-bottom:15px;
-          ">🥺</div>
 
-          <h2 style="
-            margin-bottom:10px;
-            font-size:20px;
-          ">${title}</h2>
+        <div class="loading-card">
 
-          <p style="
-            color:#888;
-            font-size:15px;
-          ">${message}</p>
+          <div class="cute-icon">
+            🥺
+          </div>
+
+          <div class="loading-title">
+            ${title}
+          </div>
+
+          <div class="loading-message">
+            ${message}
+          </div>
+
         </div>
+
       `;
+
     }
+
 
     function cleanup() {
+
       if (retryTimer) {
+
         clearTimeout(retryTimer);
+
         retryTimer = null;
+
       }
+
 
       if (timeoutTimer) {
+
         clearTimeout(timeoutTimer);
+
         timeoutTimer = null;
+
       }
+
     }
 
+
     function requestLookup() {
+
       if (finished) return;
+
 
       const callbackName =
         "lookupCallback_" + Date.now();
 
-      window[callbackName] = function(data) {
-        console.log("Lookup result:", data);
 
-        if (finished) return;
+      window[callbackName] =
+        function(data) {
 
-        finished = true;
-        cleanup();
+          console.log(
+            "Lookup result:",
+            data
+          );
 
-        delete window[callbackName];
 
-        const script =
-          document.getElementById(callbackName);
+          if (finished) return;
 
-        if (script) {
-          script.remove();
-        }
 
-        if (data.success && data.longUrl) {
-          window.location.replace(data.longUrl);
-          return;
-        }
+          finished = true;
 
-        showError(
-          "ไม่พบ link นี้ค่ะ",
-          "Short URL นี้อาจไม่มีอยู่ หรือถูกลบไปแล้ว"
-        );
-      };
+          cleanup();
+
+
+          delete window[callbackName];
+
+
+          const script =
+            document.getElementById(
+              callbackName
+            );
+
+
+          if (script) {
+            script.remove();
+          }
+
+
+          if (
+            data.success &&
+            data.longUrl
+          ) {
+
+            window.location.replace(
+              data.longUrl
+            );
+
+            return;
+
+          }
+
+
+          showError(
+            "ไม่พบ link นี้ค่ะ",
+            "Short URL นี้อาจไม่มีอยู่ หรือถูกลบไปแล้ว"
+          );
+
+        };
+
 
       const script =
         document.createElement("script");
 
-      script.id = callbackName;
+
+      script.id =
+        callbackName;
+
 
       script.src =
         API_URL +
@@ -252,36 +424,66 @@
         "&callback=" +
         encodeURIComponent(callbackName);
 
-      script.onerror = function() {
-        if (finished) return;
 
-        console.log("Lookup request error. Retrying...");
+      script.onerror =
+        function() {
 
-        delete window[callbackName];
+          if (finished) return;
 
-        script.remove();
 
-        retryTimer = setTimeout(function() {
-          requestLookup();
-        }, 1000);
-      };
+          console.log(
+            "Lookup request error. Retrying..."
+          );
 
-      document.body.appendChild(script);
+
+          delete window[callbackName];
+
+
+          script.remove();
+
+
+          retryTimer =
+            setTimeout(
+              function() {
+                requestLookup();
+              },
+              1000
+            );
+
+        };
+
+
+      document.body.appendChild(
+        script
+      );
+
     }
+
 
     requestLookup();
 
-    timeoutTimer = setTimeout(function() {
-      if (finished) return;
 
-      finished = true;
-      cleanup();
+    timeoutTimer =
+      setTimeout(
+        function() {
 
-      showError(
-        "เปิด link ไม่สำเร็จค่ะ",
-        "ระบบใช้เวลานานเกินไป กรุณาลองเปิดใหม่อีกครั้งนะคะ"
+          if (finished) return;
+
+
+          finished = true;
+
+          cleanup();
+
+
+          showError(
+            "เปิด link ไม่สำเร็จค่ะ",
+            "ระบบใช้เวลานานเกินไป กรุณาลองเปิดใหม่อีกครั้งนะคะ"
+          );
+
+        },
+        45000
       );
-    }, 45000);
+
   </script>
 
 </body>
